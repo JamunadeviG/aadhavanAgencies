@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { logout, getStoredUser } from '../services/authService.js';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/productService.js';
+import AdminLayout from '../components/AdminLayout.jsx';
 import './Products.css';
 
 const Products = () => {
@@ -17,8 +16,6 @@ const Products = () => {
     stock: ''
   });
   const [error, setError] = useState('');
-  const navigate = useNavigate();
-  const user = getStoredUser();
 
   useEffect(() => {
     fetchProducts();
@@ -113,126 +110,123 @@ const Products = () => {
   };
 
   return (
-    <div className="products-container">
-      <header className="dashboard-header">
+    <AdminLayout active="products" title="Products">
+      <div className="prod-header">
         <div>
-          <h1>AADHAVAN AGENCIES</h1>
-          <p>Welcome, {user?.name || 'Admin'}</p>
+          <div className="prod-title">Product Management</div>
+          <div className="prod-sub">Add, update and maintain stock</div>
         </div>
-        <nav className="dashboard-nav">
-          <button onClick={() => navigate('/dashboard')} className="nav-btn">
-            Dashboard
+        <div className="prod-actions">
+          <button onClick={() => setShowForm(true)} className="btn btn-primary">
+            Add Product
           </button>
-          <button onClick={() => navigate('/products')} className="nav-btn active">
-            Products
-          </button>
-          <button onClick={handleLogout} className="nav-btn logout-btn">
-            Logout
-          </button>
-        </nav>
-      </header>
-
-      <main className="products-main">
-        <div className="products-header">
-          <h2>Product Management</h2>
-          <button onClick={() => setShowForm(true)} className="add-btn">
-            + Add Product
+          <button onClick={fetchProducts} className="btn">
+            Refresh
           </button>
         </div>
+      </div>
 
-        {error && <div className="error-message">{error}</div>}
+      {error && <div className="prod-alert">{error}</div>}
 
-        {showForm && (
-          <div className="form-modal">
-            <div className="form-card">
-              <h3>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
-              <form onSubmit={handleSubmit}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Product Name *</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      placeholder="e.g., Rice"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Category *</label>
-                    <input
-                      type="text"
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                      required
-                      placeholder="e.g., Grains"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Unit *</label>
-                    <input
-                      type="text"
-                      name="unit"
-                      value={formData.unit}
-                      onChange={handleChange}
-                      required
-                      placeholder="e.g., kg, liter, piece"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Price *</label>
-                    <input
-                      type="number"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleChange}
-                      required
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Stock Quantity *</label>
-                    <input
-                      type="number"
-                      name="stock"
-                      value={formData.stock}
-                      onChange={handleChange}
-                      required
-                      min="0"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-actions">
-                  <button type="button" onClick={resetForm} className="cancel-btn">
-                    Cancel
-                  </button>
-                  <button type="submit" className="save-btn">
-                    {editingProduct ? 'Update' : 'Create'} Product
-                  </button>
-                </div>
-              </form>
+      {showForm && (
+        <div className="form-modal">
+          <div className="form-card">
+            <div className="form-title">
+              {editingProduct ? 'Edit Product' : 'Add New Product'}
             </div>
-          </div>
-        )}
 
+            <form onSubmit={handleSubmit}>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Product Name *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    placeholder="e.g., Rice"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Category *</label>
+                  <input
+                    type="text"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    required
+                    placeholder="e.g., Grains"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Unit *</label>
+                  <input
+                    type="text"
+                    name="unit"
+                    value={formData.unit}
+                    onChange={handleChange}
+                    required
+                    placeholder="e.g., kg, liter, piece"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Price *</label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    required
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Stock Quantity *</label>
+                  <input
+                    type="number"
+                    name="stock"
+                    value={formData.stock}
+                    onChange={handleChange}
+                    required
+                    min="0"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="button" onClick={resetForm} className="btn">
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  {editingProduct ? 'Update' : 'Create'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="prod-panel">
         {loading ? (
-          <div className="loading">Loading products...</div>
+          <div className="prod-loading">Loading products…</div>
         ) : products.length === 0 ? (
-          <div className="empty-state">
-            <p>No products found. Click "Add Product" to get started.</p>
+          <div className="prod-empty">
+            <div className="prod-empty-title">No products yet</div>
+            <div className="prod-empty-sub">Add your first product to start tracking stock.</div>
+            <button onClick={() => setShowForm(true)} className="btn btn-primary">
+              Add Product
+            </button>
           </div>
         ) : (
-          <div className="products-table-container">
-            <table className="products-table">
+          <div className="prod-table-wrap">
+            <table className="prod-table">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -240,34 +234,30 @@ const Products = () => {
                   <th>Unit</th>
                   <th>Price</th>
                   <th>Stock</th>
-                  <th>Actions</th>
+                  <th style={{ width: 200 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {products.map((product) => (
                   <tr key={product._id}>
-                    <td>{product.name}</td>
+                    <td className="td-strong">{product.name}</td>
                     <td>{product.category}</td>
                     <td>{product.unit}</td>
                     <td>₹{product.price.toFixed(2)}</td>
                     <td>
-                      <span className={`stock-badge ${product.stock === 0 ? 'out-of-stock' : ''}`}>
+                      <span className={`stock-chip ${product.stock === 0 ? 'out' : ''}`}>
                         {product.stock}
                       </span>
                     </td>
                     <td>
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className="edit-btn"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product._id)}
-                        className="delete-btn"
-                      >
-                        Delete
-                      </button>
+                      <div className="row-actions">
+                        <button onClick={() => handleEdit(product)} className="btn">
+                          Edit
+                        </button>
+                        <button onClick={() => handleDelete(product._id)} className="btn btn-danger">
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -275,14 +265,9 @@ const Products = () => {
             </table>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
-
-  function handleLogout() {
-    logout();
-    navigate('/login');
-  }
 };
 
 export default Products;

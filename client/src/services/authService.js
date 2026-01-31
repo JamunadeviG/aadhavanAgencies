@@ -27,6 +27,18 @@ export const login = async (credentials) => {
   }
 };
 
+export const fetchProfile = async () => {
+  try {
+    const response = await api.get('/auth/profile');
+    if (response.data?.user) {
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
+    return response.data.user;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch profile' };
+  }
+};
+
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');

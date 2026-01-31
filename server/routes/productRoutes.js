@@ -5,14 +5,17 @@ import {
   updateProduct,
   deleteProduct
 } from '../controllers/productController.js';
-import { protect } from '../middleware/auth.js';
+import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// All product routes require authentication
-router.post('/', protect, createProduct);
-router.get('/', protect, getProducts);
-router.put('/:id', protect, updateProduct);
-router.delete('/:id', protect, deleteProduct);
+// Public product listing + details
+router.get('/', getProducts);
+// (for completeness) could add /:id handler here later
+
+// Admin product management
+router.post('/', protect, adminOnly, createProduct);
+router.put('/:id', protect, adminOnly, updateProduct);
+router.delete('/:id', protect, adminOnly, deleteProduct);
 
 export default router;

@@ -1,33 +1,26 @@
 import jwt from 'jsonwebtoken';
 
-// Middleware to protect routes - verifies JWT token
-export const protect = async (req, res, next) => {
+// Middleware to protect routes - verifies JWT token and attaches user info
+export const protect = (req, res, next) => {
   try {
-    // Get token from Authorization header
-    // Format: "Bearer <token>"
     const authHeader = req.headers.authorization;
-    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Not authorized. No token provided.' 
-      });
+      return res.status(401).json({ message: 'Not authorized, no token' });
     }
 
-    // Extract token (remove "Bearer " prefix)
-    const token = authHeader.substring(7);
-
-    // Verify token
+    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Attach user info to request object for use in controllers
-    req.user = decoded;
-    
-    next(); // Continue to next middleware/route handler
+    req.user = decoded; // { id, role }
+    next();
   } catch (error) {
-    return res.status(401).json({ 
-      success: false, 
-      message: 'Not authorized. Invalid token.' 
-    });
+    return res.status(401).json({ message: 'Not authorized, invalid token' });
   }
+};
+
+// Admin-only guard
+export const adminOnly = (req, res, next) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin only' });
+  }
+  next();
 };

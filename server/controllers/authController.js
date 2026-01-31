@@ -1,118 +1,161 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 
-// Generate JWT token
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: '30d' // Token expires in 30 days
+// Generate JWT token with id and role
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+    expiresIn: '30d'
   });
 };
 
-// Register new admin user
+const generateRetailUserId = async () => {
+  const prefix = 'AA';
+  let counter = await User.countDocuments({ role: 'user' });
+  let candidate;
+  let exists = true;
+
+  while (exists) {
+    counter += 1;
+    candidate = `${prefix}${String(counter).padStart(2, '0')}`;
+    // eslint-disable-next-line no-await-in-loop
+    exists = await User.exists({ userId: candidate });
+  }
+
+  return candidate;
+};
+
+// Register new buyer (user)
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-
-    // Validate input
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide name, email, and password'
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'User already exists with this email'
-      });
-    }
-
-    // Create new user
-    const user = await User.create({
+    const {
       name,
       email,
-      password, // Password will be hashed by pre-save hook
-      role: 'admin'
+      password,
+      storeName,
+      storeType,
+      gstNumber,
+      contactNumber,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      pincode
+    } = req.body;
+
+    const normalizedEmail = email?.toLowerCase().trim();
+
+    if (!name || !normalizedEmail || !password) {
+      return res.status(400).json({ message: 'Please provide name, email and password' });
+    }
+
+    if (!storeName || !storeType || !contactNumber || !addressLine1 || !city || !state || !pincode) {
+      return res.status(400).json({ message: 'Please provide complete store information' });
+    }
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists with this email' });
+    }
+
+    const userId = await generateRetailUserId();
+
+    const user = await User.create({
+      name,
+      email: normalizedEmail,
+      password,
+      role: 'user',
+      userId,
+      storeInfo: {
+        storeName: storeName?.trim(),
+        storeType: storeType?.trim() || 'Retail',
+        gstNumber: gstNumber?.trim(),
+        contactNumber: contactNumber?.trim(),
+        addressLine1: addressLine1?.trim(),
+        addressLine2: addressLine2?.trim(),
+        city: city?.trim(),
+        state: state?.trim(),
+        pincode: pincode?.trim()
+      }
     });
 
-    // Generate token
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
-    // Send response (don't send password)
     res.status(201).json({
-      success: true,
-      message: 'User registered successfully',
       token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        userId: user.userId,
+        role: user.role,
+        storeInfo: user.storeInfo
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error registering user',
-      error: error.message
-    });
+    res.status(500).json({ message: 'Error registering user', error: error.message });
   }
 };
 
-// Login admin user
+// Return authenticated user's profile
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ message: 'Unable to fetch profile', error: error.message });
+  }
+};
+
+// Login user or admin
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide email and password'
-      });
+    const { email, password, asAdmin } = req.body;
+    if (!password) {
+      return res.status(400).json({ message: 'Please provide password' });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
+    let user;
+    const normalizedEmail = email?.toLowerCase();
+    const emailErrorMessage = asAdmin ? 'Please provide admin email' : 'Please provide registered email';
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: emailErrorMessage });
     }
 
-    // Check password
+    user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+
+    if (asAdmin && user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not an admin account' });
+    }
+
+    if (!asAdmin && user.role !== 'user') {
+      return res.status(403).json({ message: 'User ID belongs to admin' });
+    }
+
     const isPasswordCorrect = await user.comparePassword(password);
     if (!isPasswordCorrect) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate token
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
-    // Send response
-    res.status(200).json({
-      success: true,
-      message: 'Login successful',
+    res.json({
       token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        userId: user.userId,
+        storeInfo: user.storeInfo
       }
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error logging in',
-      error: error.message
-    });
+    res.status(500).json({ message: 'Error logging in', error: error.message });
   }
 };

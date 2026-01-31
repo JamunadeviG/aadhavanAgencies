@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { logout, getStoredUser } from '../services/authService.js';
 import { getProducts } from '../services/productService.js';
+import AdminLayout from '../components/AdminLayout.jsx';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -10,8 +9,6 @@ const Dashboard = () => {
     totalStock: 0
   });
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const user = getStoredUser();
 
   useEffect(() => {
     fetchDashboardData();
@@ -39,67 +36,44 @@ const Dashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div>
-          <h1>AADHAVAN AGENCIES</h1>
-          <p>Welcome, {user?.name || 'Admin'}</p>
-        </div>
-        <nav className="dashboard-nav">
-          <button onClick={() => navigate('/dashboard')} className="nav-btn active">
-            Dashboard
-          </button>
-          <button onClick={() => navigate('/products')} className="nav-btn">
-            Products
-          </button>
-          <button onClick={handleLogout} className="nav-btn logout-btn">
-            Logout
-          </button>
-        </nav>
-      </header>
-
-      <main className="dashboard-main">
-        <h2>Dashboard Summary</h2>
-
-        {loading ? (
-          <div className="loading">Loading...</div>
-        ) : (
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon">📦</div>
-              <div className="stat-content">
-                <h3>Total Products</h3>
-                <p className="stat-value">{stats.totalProducts}</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">📊</div>
-              <div className="stat-content">
-                <h3>Total Stock Quantity</h3>
-                <p className="stat-value">{stats.totalStock.toLocaleString()}</p>
-              </div>
-            </div>
+    <AdminLayout active="dashboard" title="Dashboard">
+      <div className="dash-grid">
+        <div className="dash-card dash-card-wide">
+          <div className="dash-kicker">Summary</div>
+          <div className="dash-title">Today at a glance</div>
+          <div className="dash-note">
+            This is a basic summary for the ERP starter. You can extend it later with sales,
+            purchases, payments, GST and reports.
           </div>
-        )}
-
-        <div className="quick-actions">
-          <h3>Quick Actions</h3>
-          <button 
-            onClick={() => navigate('/products')} 
-            className="action-btn"
-          >
-            Manage Products
-          </button>
         </div>
-      </main>
-    </div>
+
+        <div className="dash-card">
+          <div className="metric-label">Total Products</div>
+          <div className="metric-value">{loading ? '—' : stats.totalProducts}</div>
+          <div className="metric-hint">All items in your catalog</div>
+        </div>
+
+        <div className="dash-card">
+          <div className="metric-label">Total Stock</div>
+          <div className="metric-value">{loading ? '—' : stats.totalStock.toLocaleString()}</div>
+          <div className="metric-hint">Sum of stock across products</div>
+        </div>
+
+        <div className="dash-card dash-card-wide">
+          <div className="dash-kicker">Next</div>
+          <div className="dash-title">Quick actions</div>
+          <div className="dash-actions">
+            <button className="btn btn-primary" onClick={() => (window.location.href = '/products')}>
+              Manage Products
+            </button>
+            <button className="btn" onClick={fetchDashboardData}>
+              Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
   );
 };
 

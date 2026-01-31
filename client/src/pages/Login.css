@@ -3,32 +3,95 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--bg);
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 37, 31, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
   padding: 20px;
 }
 
+.modal-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+  width: min(420px, 100%);
+  box-shadow: 0 35px 60px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.modal-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 12px;
+  color: var(--primary-dark);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.modal-card h3 {
+  margin: 0 0 12px;
+}
+
+.modal-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 18px 0 22px;
+  text-align: left;
+}
+
+.modal-info .label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.modal-info .value {
+  font-size: 15px;
+  font-weight: 700;
+  word-break: break-all;
+}
+
 .login-card {
-  background: white;
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background: var(--card);
+  padding: 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
   width: 100%;
   max-width: 400px;
 }
 
 .login-card h1 {
   text-align: center;
-  color: #333;
-  margin-bottom: 10px;
-  font-size: 24px;
+  color: var(--text);
+  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
 }
 
 .login-card h2 {
   text-align: center;
-  color: #666;
-  margin-bottom: 30px;
-  font-size: 20px;
-  font-weight: normal;
+  color: var(--muted);
+  margin-bottom: 18px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
 .form-group {
@@ -38,41 +101,58 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #333;
-  font-weight: 500;
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
 }
 
 .form-group input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   font-size: 16px;
   box-sizing: border-box;
   transition: border-color 0.3s;
+  background: #fff;
+  color: var(--text);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: rgba(34, 197, 94, 0.65);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
 }
 
 .error-message {
-  background: #fee;
-  color: #c33;
+  background: rgba(239, 68, 68, 0.10);
+  color: #991b1b;
   padding: 12px;
-  border-radius: 5px;
+  border-radius: 12px;
   margin-bottom: 20px;
   text-align: center;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.success-message {
+  background: rgba(34, 197, 94, 0.10);
+  color: #166534;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
 .submit-btn {
   width: 100%;
   padding: 12px;
-  background: #667eea;
-  color: white;
+  background: var(--primary);
+  color: #fff;
   border: none;
-  border-radius: 5px;
+  border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -80,7 +160,7 @@
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #5568d3;
+  background: var(--primary-dark);
 }
 
 .submit-btn:disabled {
@@ -91,16 +171,52 @@
 .toggle-text {
   text-align: center;
   margin-top: 20px;
-  color: #666;
+  color: var(--muted);
+}
+
+.role-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.role-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  color: var(--text);
+}
+
+.role-btn.active {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: var(--primary-dark);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+}
+
+.role-btn:not(.active):hover {
+  border-color: rgba(34, 197, 94, 0.3);
 }
 
 .toggle-link {
-  color: #667eea;
+  color: var(--primary-dark);
   cursor: pointer;
   font-weight: 600;
   text-decoration: underline;
 }
 
 .toggle-link:hover {
-  color: #5568d3;
+  color: var(--primary);
+}
+
+.helper-text {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
 }
