@@ -1,0 +1,94 @@
+.offer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+}
+
+.offer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(19, 83, 42, 0.08);
+}
+
+.offer-head-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.offer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.offer-form label {
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.offer-form input,
+.offer-form textarea {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 12px;
+  font-size: 16px;
+}
+
+.offer-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.offer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.offer-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+
+.offer-list span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.offer-list-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.offer-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(19, 83, 42, 0.12);
+  border-radius: 16px;
+  padding: 14px 20px;
+  box-shadow: 0 18px 40px rgba(15, 56, 28, 0.15);
+  font-weight: 700;
+}
+
+@media (max-width: 960px) {
+  .offer-grid {
+    grid-template-columns: 1fr;
+  }
+}
