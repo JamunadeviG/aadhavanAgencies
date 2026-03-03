@@ -15,6 +15,7 @@ import UserDashboard from './pages/UserDashboard.jsx';
 import Orders from './pages/Orders.jsx';
 import Cart from './pages/Cart.jsx';
 import UserTrackOrders from './pages/UserTrackOrders.jsx';
+import EditProfile from './pages/EditProfile.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { isAuthenticated, getStoredUser } from './services/authService.js';
 import './App.css';
@@ -131,18 +132,18 @@ function App() {
           }
         />
         <Route
-          path="/admin-track-orders"
+          path="/edit-profile"
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <TrackOrders />
+            <ProtectedRoute allowedRoles={['user']}>
+              <EditProfile />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/support"
+          path="/admin-track-orders"
           element={
-            <ProtectedRoute allowedRoles={['user', 'admin']}>
-              <Support />
+            <ProtectedRoute allowedRoles={['admin']}>
+              <TrackOrders />
             </ProtectedRoute>
           }
         />

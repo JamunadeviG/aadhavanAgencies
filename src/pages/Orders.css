@@ -3,7 +3,9 @@
 .orders-page {
   min-height: 100vh;
   background: #f5f5f5;
-  padding: 20px 0;
+  padding: 0;
+  margin: 0;
+  width: 100%;
 }
 
 .container {

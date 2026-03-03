@@ -5,72 +5,6 @@ import { getOffers } from '../utils/offerStorage.js';
 import { getProducts } from '../services/productService.js';
 import './UserHome.css';
 
-// LocalStorage Cart Functions
-const getCartFromStorage = () => {
-  try {
-    const cart = localStorage.getItem('cart');
-    return cart ? JSON.parse(cart) : [];
-  } catch (error) {
-    console.error('Error getting cart from localStorage:', error);
-    return [];
-  }
-};
-
-const saveCartToStorage = (cart) => {
-  try {
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('cartUpdated'));
-  } catch (error) {
-    console.error('Error saving cart to localStorage:', error);
-  }
-};
-
-const addToCartLocal = (product) => {
-  console.log('🛒 ADD TO CART LOCAL START');
-  console.log('🛒 Product being added:', product);
-  
-  const cart = getCartFromStorage();
-  console.log('🛒 Current cart before adding:', cart);
-  
-  const existingItem = cart.find(item => 
-    (item.productId === product._id || item.productId === product.id || 
-     item._id === product._id || item.id === product.id)
-  );
-  
-  console.log('🛒 Existing item found:', existingItem);
-  
-  if (existingItem) {
-    existingItem.quantity += 1;
-    console.log('🛒 Updated existing item quantity to:', existingItem.quantity);
-  } else {
-    const newItem = {
-      productId: product._id || product.id,
-      _id: product._id || product.id,
-      name: product.name,
-      price: product.price,
-      unit: product.unit,
-      stock: product.stock,
-      quantity: 1,
-      addedAt: new Date().toISOString()
-    };
-    cart.push(newItem);
-    console.log('🛒 Added new item to cart:', newItem);
-  }
-  
-  console.log('🛒 Cart after adding:', cart);
-  console.log('🛒 Total items in cart:', cart.length);
-  
-  saveCartToStorage(cart);
-  console.log('🛒 Cart saved to localStorage');
-  
-  return { success: true, cart: { itemCount: cart.length, items: cart } };
-};
-
-const getCartCountFromStorage = () => {
-  const cart = getCartFromStorage();
-  return cart.reduce((total, item) => total + item.quantity, 0);
-};
-
 const UserHome = () => {
   const user = getStoredUser();
   const navigate = useNavigate();
@@ -78,16 +12,12 @@ const UserHome = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [cartCount, setCartCount] = useState(0);
-  const [showCartNotification, setShowCartNotification] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState('');
 
   useEffect(() => {
     // Load offers for banner
     setOffers(getOffers());
     
-    // Load products for quick order
+    // Load products for display
     const loadProducts = async () => {
       try {
         const response = await getProducts();
@@ -100,28 +30,7 @@ const UserHome = () => {
     };
     
     loadProducts();
-    
-    // Load cart count from localStorage
-    const updateCartCount = () => {
-      const count = getCartCountFromStorage();
-      setCartCount(count);
-    };
-    
-    updateCartCount();
-    
-    // Listen for cart changes
-    const handleCartChange = () => {
-      updateCartCount();
-    };
-    
-    window.addEventListener('cartUpdated', handleCartChange);
-    
-    return () => {
-      window.removeEventListener('cartUpdated', handleCartChange);
-    };
   }, []);
-
-
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % offers.length);
@@ -144,110 +53,8 @@ const UserHome = () => {
   };
 
   const confirmLogout = () => {
-    // Use the authService logout function which handles everything
     logout();
     setShowLogoutConfirm(false);
-  };
-
-  const handleAddToCart = async (product) => {
-    try {
-      console.log('🛒 ADD TO CART START ===');
-      console.log('Product object:', product);
-      console.log('Product _id:', product._id);
-      console.log('Product id:', product.id);
-      console.log('User object:', user);
-      console.log('User ID:', user?.id);
-      
-      if (!user?.id) {
-        console.log('❌ User not logged in');
-        setNotificationMessage('Please login to add products to cart');
-        setShowCartNotification(true);
-        setTimeout(() => setShowCartNotification(false), 3000);
-        return;
-      }
-
-      console.log('📤 Adding to localStorage cart...');
-
-      const response = addToCartLocal(product);
-      
-      console.log('📥 Cart add response:', response);
-      console.log('Response success:', response.success);
-      console.log('Response cart:', response.cart);
-      
-      if (response.success) {
-        console.log('✅ Cart add successful');
-        const newCount = getCartCountFromStorage();
-        setCartCount(newCount);
-        setNotificationMessage(`${product.name} added to cart! Total items: ${response.cart.items.length}`);
-        setShowCartNotification(true);
-        setTimeout(() => setShowCartNotification(false), 3000);
-        window.dispatchEvent(new Event('cartUpdated'));
-        
-        // Optional: Ask user if they want to go to cart
-        setTimeout(() => {
-          if (window.confirm(`${product.name} added to cart! Go to cart page?`)) {
-            navigate('/cart');
-          }
-        }, 1000);
-      } else {
-        console.log('❌ Cart add failed');
-        console.log('Error message:', response.message);
-        setNotificationMessage(response.message || 'Failed to add to cart');
-        setShowCartNotification(true);
-        setTimeout(() => setShowCartNotification(false), 3000);
-      }
-    } catch (error) {
-      console.error('=== ADD TO CART ERROR ===');
-      console.error('Error object:', error);
-      console.error('Error message:', error.message);
-      setNotificationMessage('Failed to add to cart. Please try again.');
-      setShowCartNotification(true);
-      setTimeout(() => setShowCartNotification(false), 3000);
-    }
-  };
-
-  // Test function to add multiple products
-  const testMultipleProducts = () => {
-    console.log('🧪 TESTING MULTIPLE PRODUCTS');
-    
-    const testProducts = [
-      {
-        _id: 'test1',
-        name: 'Test Product 1',
-        price: 10,
-        unit: 'kg',
-        stock: 50
-      },
-      {
-        _id: 'test2', 
-        name: 'Test Product 2',
-        price: 20,
-        unit: 'L',
-        stock: 30
-      },
-      {
-        _id: 'test3',
-        name: 'Test Product 3',
-        price: 15,
-        unit: 'pcs',
-        stock: 100
-      }
-    ];
-    
-    testProducts.forEach((product, index) => {
-      setTimeout(() => {
-        console.log(`🧪 Adding test product ${index + 1}:`, product);
-        addToCartLocal(product);
-      }, index * 500);
-    });
-    
-    setTimeout(() => {
-      const cart = getCartFromStorage();
-      console.log('🧪 Final cart after adding test products:', cart);
-      setNotificationMessage(`Added ${testProducts.length} test products to cart!`);
-      setShowCartNotification(true);
-      setTimeout(() => setShowCartNotification(false), 3000);
-    }, 2000);
   };
 
   return (
@@ -270,8 +77,8 @@ const UserHome = () => {
             <button className="btn" onClick={() => navigate('/track-orders')}>
               📦 Track Orders
             </button>
-            <button className="btn" onClick={() => navigate('/cart')}>
-              🛒 Cart {cartCount > 0 && `(${cartCount})`}
+            <button className="btn" onClick={() => navigate('/products')}>
+              🛍️ Products
             </button>
           </nav>
         </div>
@@ -387,15 +194,9 @@ const UserHome = () => {
                       <div className="product-actions">
                         <button 
                           className="btn btn-primary btn-sm"
-                          onClick={() => handleAddToCart(product)}
+                          onClick={() => navigate('/products')}
                         >
-                          Add to Cart
-                        </button>
-                        <button 
-                          className="btn btn-outline btn-sm"
-                          onClick={() => navigate('/cart')}
-                        >
-                          🛒 View Cart
+                          View Details
                         </button>
                       </div>
                     </div>
@@ -406,34 +207,6 @@ const UserHome = () => {
           </div>
 
         </div>
-      </div>
-
-      {/* Cart Notification Popup */}
-      {showCartNotification && (
-        <div className="cart-notification">
-          <div className="notification-content">
-            <div className="notification-icon">✅</div>
-            <p>{notificationMessage}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Test Button for Multiple Products */}
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000 }}>
-        <button 
-          className="btn btn-primary"
-          onClick={testMultipleProducts}
-          style={{ 
-            background: '#ff6b6b', 
-            border: 'none', 
-            padding: '10px 15px',
-            borderRadius: '5px',
-            color: 'white',
-            cursor: 'pointer'
-          }}
-        >
-          🧪 Test Multiple Products
-        </button>
       </div>
 
       {/* Logout Confirmation Modal */}

@@ -11,12 +11,20 @@
 /* Base Layout */
 .home-page {
   min-height: 100vh;
+  padding: 0;
+  margin: 0;
+  width: 100%;
 }
 
 .home-main {
   padding-bottom: 60px;
   display: grid;
   gap: 64px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 /* Hero Section */

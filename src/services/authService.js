@@ -19,6 +19,9 @@ export const login = async (credentials) => {
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Restore user-specific data
+      restoreUserData(response.data.user);
     }
     
     return response.data;
@@ -39,12 +42,76 @@ export const fetchProfile = async () => {
   }
 };
 
+export const restoreUserData = (user) => {
+  try {
+    // Restore user's profile data if it exists
+    const userProfile = localStorage.getItem(`user_${user.id}`);
+    if (userProfile) {
+      const storedProfile = JSON.parse(userProfile);
+      const updatedUser = { ...user, ...storedProfile };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+    
+    // Restore user's orders from localStorage (if they exist)
+    const userOrders = localStorage.getItem(`orders_${user.id}`);
+    if (userOrders) {
+      const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const userOrderData = JSON.parse(userOrders);
+      
+      // Merge user orders with all orders
+      const mergedOrders = [...allOrders.filter(order => !order.userId || order.userId !== user.id), ...userOrderData];
+      localStorage.setItem('orders', JSON.stringify(mergedOrders));
+    }
+    
+    // Restore user's cart from localStorage (if it exists)
+    const userCart = localStorage.getItem(`cart_${user.id}`);
+    if (userCart) {
+      localStorage.setItem('cart', userCart);
+    }
+    
+    // Restore user's notifications
+    const userNotifications = localStorage.getItem(`notifications_${user.id}`);
+    if (userNotifications) {
+      const allNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      const userNotificationData = JSON.parse(userNotifications);
+      
+      // Merge user notifications with all notifications
+      const mergedNotifications = [...allNotifications.filter(notif => !notif.userId || notif.userId !== user.id), ...userNotificationData];
+      localStorage.setItem('adminNotifications', JSON.stringify(mergedNotifications));
+    }
+    
+  } catch (error) {
+    console.error('Error restoring user data:', error);
+  }
+};
+
+export const updateUserProfile = (updatedUser) => {
+  try {
+    // Update user in localStorage
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    
+    // Save user-specific data for persistence
+    localStorage.setItem(`user_${updatedUser.id}`, JSON.stringify(updatedUser));
+    
+    // Dispatch user update event for any components listening
+    window.dispatchEvent(new CustomEvent('userProfileUpdate', { detail: updatedUser }));
+    
+    return updatedUser;
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    throw error;
+  }
+};
+
 export const logout = () => {
+  // Get current user before logout
+  const currentUser = getStoredUser();
+  
+  // Only clear token and session, preserve user data
   localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  // Clear any other user-related data
+  
+  // Clear session-specific data but preserve user orders
   localStorage.removeItem('cart');
-  localStorage.removeItem('orders');
   localStorage.removeItem('adminNotifications');
   
   // Dispatch logout event for any components listening

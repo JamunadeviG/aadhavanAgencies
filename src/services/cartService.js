@@ -41,7 +41,15 @@ export const saveCart = (cartItems) => {
     if (!Array.isArray(cartItems)) {
       throw new Error('Cart items must be an array');
     }
+    
+    // Save to main cart
     localStorage.setItem('cart', JSON.stringify(cartItems));
+    
+    // Also save user-specific cart for data persistence
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.id) {
+      localStorage.setItem(`cart_${user.id}`, JSON.stringify(cartItems));
+    }
   } catch (error) {
     console.error('Error saving cart:', error);
     throw error;

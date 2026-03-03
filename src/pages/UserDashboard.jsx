@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getStoredUser, logout, fetchProfile } from '../services/authService.js';
+import { getStoredUser, logout } from '../services/authService.js';
 import './UserDashboard.css';
 
 const sideNavLinks = [
