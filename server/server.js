@@ -1,14 +1,15 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import dotenv from 'dotenv';
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
 
 // Import routes
-import authRoutes from './routes/authRoutes.js';
-import productRoutes from './routes/productRoutes.js';
-import cartRoutes from './routes/cartRoutes.js';
-import orderRoutes from './routes/orderRoutes.js';
-import { ensureDefaultAdmin } from './utils/adminSeeder.js';
+const authRoutes = require('./routes/authRoutes.js');
+const productRoutes = require('./routes/productRoutes.js');
+const cartRoutes = require('./routes/cartRoutes.js');
+const orderRoutes = require('./routes/orderRoutes.js');
+const userRoutes = require('./routes/userRoutes.js');
+const { ensureDefaultAdmin } = require('./utils/adminSeeder.js');
 
 // Load environment variables
 dotenv.config();
@@ -60,7 +61,12 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable CORS for frontend
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+})); // Enable CORS for frontend
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
 
@@ -69,10 +75,35 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/users', userRoutes);
+
+// Simple test endpoint to verify server is working
+app.get('/api/test', (req, res) => {
+  console.log('🔗 Test endpoint hit');
+  res.json({ 
+    success: true, 
+    message: 'Server is working!',
+    timestamp: new Date().toISOString(),
+    headers: req.headers
+  });
+});
 
 // Health check route
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'Server is running' });
+  const dbStatus = mongoose.connection.readyState;
+  const dbStatusText = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+  
+  res.json({ 
+    success: true, 
+    message: 'Server is running',
+    database: dbStatusText[dbStatus] || 'unknown',
+    databaseState: dbStatus
+  });
 });
 
 // Connect to MongoDB

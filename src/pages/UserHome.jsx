@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getStoredUser, logout } from '../services/authService.js';
-import { getOffers } from '../utils/offerStorage.js';
+import { getStoredUser } from '../services/authService.js';
 import { getProducts } from '../services/productService.js';
+import { addToCart, getCart } from '../services/cartService.js';
+import { PageWrapper, PageContent, Card, CardBody, Grid, Flex, LoadingState } from '../components/Layout.jsx';
+import { ImageNavigation } from '../components/ImageNavigation.jsx';
+import { CommonFooter } from '../components/CommonFooter.jsx';
 import './UserHome.css';
 
 // LocalStorage Cart Functions
@@ -32,10 +35,14 @@ const addToCartLocal = (product) => {
   const cart = getCartFromStorage();
   console.log('🛒 Current cart before adding:', cart);
   
-  const existingItem = cart.find(item => 
-    (item.productId === product._id || item.productId === product.id || 
-     item._id === product._id || item.id === product.id)
-  );
+  // Create a unique identifier for the product
+  const productId = product._id || product.id || product.name + '-' + product.price;
+  console.log('🛒 Product ID for cart:', productId);
+  
+  const existingItem = cart.find(item => {
+    const itemId = item._id || item.id || item.name + '-' + item.price;
+    return itemId === productId;
+  });
   
   console.log('🛒 Existing item found:', existingItem);
   
@@ -44,8 +51,9 @@ const addToCartLocal = (product) => {
     console.log('🛒 Updated existing item quantity to:', existingItem.quantity);
   } else {
     const newItem = {
-      productId: product._id || product.id,
-      _id: product._id || product.id,
+      productId: productId,
+      _id: productId,
+      id: productId,
       name: product.name,
       price: product.price,
       unit: product.unit,
@@ -83,6 +91,33 @@ const UserHome = () => {
   const [showCartNotification, setShowCartNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
 
+  // Sample offers data for banner
+  const getOffers = () => {
+    return [
+      {
+        id: 1,
+        title: "Fresh Vegetables Sale",
+        description: "Get 20% off on all fresh vegetables",
+        image: "/api/placeholder/800/400",
+        discount: "20% OFF"
+      },
+      {
+        id: 2,
+        title: "Organic Fruits Special",
+        description: "Buy 1 Get 1 Free on selected organic fruits",
+        image: "/api/placeholder/800/400",
+        discount: "BOGO"
+      },
+      {
+        id: 3,
+        title: "Dairy Products Deal",
+        description: "15% off on all dairy products",
+        image: "/api/placeholder/800/400",
+        discount: "15% OFF"
+      }
+    ];
+  };
+
   useEffect(() => {
     // Load offers for banner
     setOffers(getOffers());
@@ -101,10 +136,16 @@ const UserHome = () => {
     
     loadProducts();
     
-    // Load cart count from localStorage
-    const updateCartCount = () => {
-      const count = getCartCountFromStorage();
-      setCartCount(count);
+    // Load cart count from database
+    const updateCartCount = async () => {
+      try {
+        const cartItems = await getCart();
+        const count = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
+        setCartCount(count);
+      } catch (error) {
+        console.error('Error loading cart count:', error);
+        setCartCount(0);
+      }
     };
     
     updateCartCount();
@@ -166,19 +207,39 @@ const UserHome = () => {
         return;
       }
 
-      console.log('📤 Adding to localStorage cart...');
+      console.log('📤 Adding to database cart...');
 
-      const response = addToCartLocal(product);
+      // Prepare product data for database
+      const productId = product._id || product.id || `product-${product.name}-${product.price}`;
+      const productData = {
+        productId: productId,
+        name: product.name || 'Unknown Product',
+        price: parseFloat(product.price) || 0,
+        unit: product.unit || 'unit',
+        stock: parseInt(product.stock) || 0,
+        quantity: 1
+      };
+
+      console.log('📤 Prepared product data:', productData);
+
+      const response = await addToCart(productData);
       
       console.log('📥 Cart add response:', response);
-      console.log('Response success:', response.success);
-      console.log('Response cart:', response.cart);
       
       if (response.success) {
         console.log('✅ Cart add successful');
-        const newCount = getCartCountFromStorage();
-        setCartCount(newCount);
-        setNotificationMessage(`${product.name} added to cart! Total items: ${response.cart.items.length}`);
+        
+        // Update cart count from database
+        try {
+          const cartItems = await getCart();
+          const newCount = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
+          setCartCount(newCount);
+          setNotificationMessage(`${product.name} added to cart! Total items: ${newCount}`);
+        } catch (countError) {
+          console.error('Error updating cart count:', countError);
+          setNotificationMessage(`${product.name} added to cart!`);
+        }
+        
         setShowCartNotification(true);
         setTimeout(() => setShowCartNotification(false), 3000);
         window.dispatchEvent(new Event('cartUpdated'));
@@ -251,78 +312,38 @@ const UserHome = () => {
   };
 
   return (
-    <div className="user-home-page">
-      {/* User Dashboard Style Navbar */}
-      <header className="user-topbar">
-        <div className="user-brand">
-          <div className="user-logo">AA</div>
-          <div>
-            <p className="user-brand-name">Aadhavan Agencies</p>
-            <span className="user-brand-sub">Retail Partner Center</span>
-          </div>
-        </div>
-        
-        <div className="user-topnav-wrapper">
-          <nav className="user-quicknav" aria-label="Quick actions">
-            <button className="btn" onClick={() => navigate('/user-dashboard')}>
-              📊 Dashboard
-            </button>
-            <button className="btn" onClick={() => navigate('/track-orders')}>
-              📦 Track Orders
-            </button>
-            <button className="btn" onClick={() => navigate('/cart')}>
-              🛒 Cart {cartCount > 0 && `(${cartCount})`}
-            </button>
-          </nav>
-        </div>
-        
-        <div className="user-top-actions">
-          <div className="user-profile-card">
-            <div className="user-avatar">
-              {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
-            </div>
-            <div className="user-details">
-              <div className="user-welcome-text">Welcome back,</div>
-              <div className="user-display-name">{user?.name || user?.email || 'User'}</div>
-            </div>
-            <button className="btn btn-outline edit-profile-btn" onClick={() => navigate('/edit-profile')}>
-              ✏️ Edit
-            </button>
-          </div>
-          <button className="btn btn-danger logout-btn" onClick={handleLogout}>Logout</button>
-        </div>
-      </header>
+    <PageWrapper>
+      <ImageNavigation user={user} />
 
-      <div className="user-dashboard">
-        <div className="container">
-          
-          {/* Offers Banner */}
-          {offers.length > 0 && (
-            <div className="dashboard-row offers-banner-section">
-              <div className="offers-carousel">
+      <PageContent>
+        {/* Offers Banner */}
+        {offers.length > 0 && (
+          <div className="dashboard-row">
+            <Card className="offers-carousel">
+              <CardBody>
                 <div className="carousel-container">
                   <div className="carousel-track" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
                     {offers.map((offer, index) => (
                       <div key={offer.id} className="carousel-slide">
-                        <div className="offer-card">
+                        <Card hover className="offer-card">
                           <div className="offer-image">
                             <img 
                               src={`https://images.unsplash.com/photo-${1504674900247 + index}-0877df9cc836?auto=format&fit=crop&w=400&q=60`}
                               alt={offer.title}
                             />
                           </div>
-                          <div className="offer-content">
+                          <CardBody>
                             <span className="offer-badge">{offer.discount}% OFF</span>
-                            <h3>{offer.title}</h3>
-                            <p>{offer.description}</p>
+                            <h3 className="heading-4">{offer.title}</h3>
+                            <p className="text-small">{offer.description}</p>
                             <button 
                               className="btn btn-primary"
                               onClick={() => navigate('/products')}
                             >
                               Shop Now
                             </button>
-                          </div>
-                        </div>
+                          </CardBody>
+                        </Card>
                       </div>
                     ))}
                   </div>
@@ -346,40 +367,48 @@ const UserHome = () => {
                     ))}
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+              </CardBody>
+            </Card>
+          </div>
+        )}
 
-          {/* Products Section */}
-          <div className="dashboard-row products-section">
-            <div className="section-header">
-              <h2>Featured Products</h2>
-              <button className="btn btn-outline" onClick={() => navigate('/products')}>
-                View All Products
-              </button>
-            </div>
-            
-            {loading ? (
-              <div className="loading">Loading products...</div>
-            ) : (
-              <div className="products-grid">
-                {products.slice(0, 8).map((product) => (
-                  <div key={product.id} className="product-card">
+        {/* Products Section */}
+        <div className="dashboard-row">
+          <div className="section-header">
+            <h2 className="heading-2">Featured Products</h2>
+            <button className="btn btn-outline" onClick={() => navigate('/products')}>
+              View All Products
+            </button>
+          </div>
+          
+          {loading ? (
+            <LoadingState message="Loading products..." />
+          ) : (
+            <Grid cols={4} gap="6">
+              {products.slice(0, 8).map((product, index) => {
+                // Ensure each product has a unique ID
+                const productWithId = {
+                  ...product,
+                  id: product.id || product._id || `product-${index}-${product.name}-${product.price}`
+                };
+                
+                return (
+                  <Card key={productWithId.id} hover className="product-card">
                     <div className="product-image">
                       <img 
                         src={`https://images.unsplash.com/photo-${1504674900247 + Math.floor(Math.random() * 100)}-0877df9cc836?auto=format&fit=crop&w=300&q=60`}
-                        alt={product.name}
+                        alt={productWithId.name}
                       />
                     </div>
-                    <div className="product-info">
-                      <h3>{product.name}</h3>
+                    <CardBody>
+                      <h3 className="heading-5">{productWithId.name}</h3>
                       <div className="product-price">
-                        <span className="price">₹{product.price}</span>
-                        <span className="unit">/{product.unit}</span>
+                        <span className="price">₹{productWithId.price}</span>
+                        <span className="unit">/{productWithId.unit}</span>
                       </div>
                       <div className="product-stock">
-                        {product.stock > 0 ? (
-                          <span className="in-stock">In Stock ({product.stock} {product.unit})</span>
+                        {productWithId.stock > 0 ? (
+                          <span className="in-stock">In Stock ({productWithId.stock} {productWithId.unit})</span>
                         ) : (
                           <span className="out-of-stock">Out of Stock</span>
                         )}
@@ -387,7 +416,7 @@ const UserHome = () => {
                       <div className="product-actions">
                         <button 
                           className="btn btn-primary btn-sm"
-                          onClick={() => handleAddToCart(product)}
+                          onClick={() => handleAddToCart(productWithId)}
                         >
                           Add to Cart
                         </button>
@@ -398,17 +427,16 @@ const UserHome = () => {
                           🛒 View Cart
                         </button>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
+                    </CardBody>
+                  </Card>
+                );
+              })}
+            </Grid>
+          )}
         </div>
-      </div>
+      </PageContent>
 
-      {/* Cart Notification Popup */}
+      {/* Cart Notification */}
       {showCartNotification && (
         <div className="cart-notification">
           <div className="notification-content">
@@ -418,47 +446,8 @@ const UserHome = () => {
         </div>
       )}
 
-      {/* Test Button for Multiple Products */}
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000 }}>
-        <button 
-          className="btn btn-primary"
-          onClick={testMultipleProducts}
-          style={{ 
-            background: '#ff6b6b', 
-            border: 'none', 
-            padding: '10px 15px',
-            borderRadius: '5px',
-            color: 'white',
-            cursor: 'pointer'
-          }}
-        >
-          🧪 Test Multiple Products
-        </button>
-      </div>
-
-      {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>Confirm Logout</h3>
-            </div>
-            <div className="modal-body">
-              <p>Are you sure you want to logout?</p>
-              <p>You will be redirected to the home page.</p>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-outline" onClick={cancelLogout}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={confirmLogout}>
-                Yes, Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <CommonFooter />
+    </PageWrapper>
   );
 };
 

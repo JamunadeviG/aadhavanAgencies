@@ -1,5 +1,5 @@
-import User from '../models/User.js';
-import jwt from 'jsonwebtoken';
+const User = require('../models/User.js');
+const jwt = require('jsonwebtoken');
 
 // Generate JWT token with id and role
 const generateToken = (id, role) => {
@@ -24,8 +24,7 @@ const generateRetailUserId = async () => {
   return candidate;
 };
 
-// Register new buyer (user)
-export const register = async (req, res) => {
+const register = async (req, res) => {
   try {
     const {
       name,
@@ -39,7 +38,10 @@ export const register = async (req, res) => {
       addressLine2,
       city,
       state,
-      pincode
+      pincode,
+      ownerName,
+      ownerEmail,
+      ownerPhone
     } = req.body;
 
     const normalizedEmail = email?.toLowerCase().trim();
@@ -50,6 +52,10 @@ export const register = async (req, res) => {
 
     if (!storeName || !storeType || !contactNumber || !addressLine1 || !city || !state || !pincode) {
       return res.status(400).json({ message: 'Please provide complete store information' });
+    }
+
+    if (!ownerName || !ownerEmail || !ownerPhone) {
+      return res.status(400).json({ message: 'Please provide complete owner information' });
     }
 
     const existingUser = await User.findOne({ email: normalizedEmail });
@@ -65,17 +71,21 @@ export const register = async (req, res) => {
       password,
       role: 'user',
       userId,
-      storeInfo: {
-        storeName: storeName?.trim(),
-        storeType: storeType?.trim() || 'Retail',
-        gstNumber: gstNumber?.trim(),
-        contactNumber: contactNumber?.trim(),
-        addressLine1: addressLine1?.trim(),
-        addressLine2: addressLine2?.trim(),
-        city: city?.trim(),
-        state: state?.trim(),
-        pincode: pincode?.trim()
-      }
+      // Store Information - Individual fields
+      storeName: storeName?.trim(),
+      storeType: storeType?.trim() || 'Retail',
+      gstNumber: gstNumber?.trim(),
+      contactNumber: contactNumber?.trim(),
+      // Address Information - Individual fields
+      addressLine1: addressLine1?.trim(),
+      addressLine2: addressLine2?.trim(),
+      city: city?.trim(),
+      state: state?.trim(),
+      pincode: pincode?.trim(),
+      // Owner Information - Individual fields
+      ownerName: ownerName?.trim(),
+      ownerEmail: ownerEmail?.trim(),
+      ownerPhone: ownerPhone?.trim()
     });
 
     const token = generateToken(user._id, user.role);
@@ -88,7 +98,19 @@ export const register = async (req, res) => {
         email: user.email,
         userId: user.userId,
         role: user.role,
-        storeInfo: user.storeInfo
+        // Return all individual fields
+        storeName: user.storeName,
+        storeType: user.storeType,
+        gstNumber: user.gstNumber,
+        contactNumber: user.contactNumber,
+        addressLine1: user.addressLine1,
+        addressLine2: user.addressLine2,
+        city: user.city,
+        state: user.state,
+        pincode: user.pincode,
+        ownerName: user.ownerName,
+        ownerEmail: user.ownerEmail,
+        ownerPhone: user.ownerPhone
       }
     });
   } catch (error) {
@@ -97,7 +119,7 @@ export const register = async (req, res) => {
 };
 
 // Return authenticated user's profile
-export const getProfile = async (req, res) => {
+const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) {
@@ -111,7 +133,7 @@ export const getProfile = async (req, res) => {
 };
 
 // Login user or admin
-export const login = async (req, res) => {
+const login = async (req, res) => {
   try {
     const { email, password, asAdmin } = req.body;
     if (!password) {
@@ -152,10 +174,28 @@ export const login = async (req, res) => {
         email: user.email,
         role: user.role,
         userId: user.userId,
-        storeInfo: user.storeInfo
+        // Return all individual fields
+        storeName: user.storeName,
+        storeType: user.storeType,
+        gstNumber: user.gstNumber,
+        contactNumber: user.contactNumber,
+        addressLine1: user.addressLine1,
+        addressLine2: user.addressLine2,
+        city: user.city,
+        state: user.state,
+        pincode: user.pincode,
+        ownerName: user.ownerName,
+        ownerEmail: user.ownerEmail,
+        ownerPhone: user.ownerPhone
       }
     });
   } catch (error) {
     res.status(500).json({ message: 'Error logging in', error: error.message });
   }
+};
+
+module.exports = {
+  register,
+  getProfile,
+  login
 };

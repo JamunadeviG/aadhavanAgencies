@@ -64,7 +64,6 @@ const AdminLayout = ({ active, title, children }) => {
           </nav>
 
           <div className="admin-shell-actions">
-            <button className="btn ghost" onClick={() => go('/')}>Storefront</button>
             <button className="btn btn-danger" onClick={handleLogout}>Logout</button>
           </div>
         </div>

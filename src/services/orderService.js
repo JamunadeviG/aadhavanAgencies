@@ -22,7 +22,7 @@ export const getAllOrders = async () => {
 
 export const getUserOrders = async (userId) => {
   try {
-    const response = await api.get(`/orders/user/${userId}`);
+    const response = await api.get('/orders/my');
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Failed to fetch user orders' };

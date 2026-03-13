@@ -1,0 +1,396 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { login, register, isAuthenticated, getStoredUser } from '../services/authService.js';
+import { PageWrapper, PageContent, Card, CardBody, Grid } from '../components/Layout.jsx';
+import './Login.css';
+
+const initialFormState = {
+  name: '',
+  email: '',
+  password: '',
+  storeName: '',
+  storeType: 'Retail',
+  gstNumber: '',
+  contactNumber: '',
+  addressLine1: '',
+  addressLine2: '',
+  city: '',
+  state: '',
+  pincode: ''
+};
+
+const Login = () => {
+  const [loginRole, setLoginRole] = useState('admin');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const storedUser = getStoredUser();
+      const destination = storedUser?.role === 'admin' ? '/admin-home' : '/user-home';
+      navigate(destination);
+    }
+  }, [navigate]);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    setError('');
+  };
+
+  const resetForm = () => {
+    setFormData(initialFormState);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const payload = {
+        password: formData.password,
+        asAdmin: loginRole === 'admin'
+      };
+
+      if (loginRole === 'admin') {
+        payload.email = formData.email;
+      } else {
+        payload.email = formData.email;
+      }
+
+      const response = await login(payload);
+      const destination = response?.user?.role === 'admin' ? '/admin-home' : '/user-home';
+      navigate(destination);
+    } catch (err) {
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (err.response?.status === 401) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (err.response?.status === 404) {
+        errorMessage = 'User not found. Please check your email or register for a new account.';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'Access denied. You do not have permission to access this account.';
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (err.code === 'NETWORK_ERROR') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <PageWrapper>
+      <PageContent>
+        <div className="login-container">
+          <Card className="login-card">
+            <CardBody>
+                <div className="login-header">
+                  <div className="brand-logo">
+                    <span>AA</span>
+                  </div>
+                  <h1 className="heading-2">Welcome Back</h1>
+                  <p className="text-body">Sign in to your account to continue</p>
+                </div>
+
+                {registrationSuccess && (
+                  <div className="success-modal-overlay" role="alertdialog" aria-live="assertive">
+                    <Card className="success-modal-card">
+                      <CardBody className="text-center">
+                        <div className="success-badge">Registration Complete</div>
+                        <h3 className="heading-3">Welcome to Aadhavan Agencies 🎉</h3>
+                        <p className="text-body">
+                          {registrationSuccess.storeName ? (
+                            <>
+                              <strong>{registrationSuccess.storeName}</strong> has been registered successfully.
+                            </>
+                          ) : (
+                            'Your store has been registered successfully.'
+                          )}
+                        </p>
+                        <div className="success-info">
+                          <Grid cols={2} gap="4">
+                            <div className="info-item">
+                              <span className="info-label">Retail ID</span>
+                              <span className="info-value">{registrationSuccess.userId || 'Assigned automatically'}</span>
+                            </div>
+                            <div className="info-item">
+                              <span className="info-label">Login Email</span>
+                              <span className="info-value">{registrationSuccess.email}</span>
+                            </div>
+                          </Grid>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-lg"
+                          onClick={() => setRegistrationSuccess(null)}
+                        >
+                          Continue to Login
+                        </button>
+                      </CardBody>
+                    </Card>
+                  </div>
+                )}
+
+                <div className="role-toggle">
+                    <button
+                      type="button"
+                      className={`role-btn ${loginRole === 'admin' ? 'active' : ''}`}
+                      onClick={() => {
+                        setLoginRole('admin');
+                        setError('');
+                      }}
+                    >
+                      Admin Login
+                    </button>
+                    <button
+                      type="button"
+                      className={`role-btn ${loginRole === 'user' ? 'active' : ''}`}
+                      onClick={() => {
+                        setLoginRole('user');
+                        setError('');
+                      }}
+                    >
+                      User Login
+                    </button>
+                  </div>
+
+                {error && <div className="error-message">{error}</div>}
+
+                <form onSubmit={handleSubmit} className="login-form">
+                      <div className="form-group">
+                        <label className="form-label">
+                          {loginRole === 'admin' ? 'Admin Email' : 'Registered Email'}
+                        </label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          required
+                          className="form-input"
+                          placeholder={loginRole === 'admin' ? 'Enter admin email' : 'Enter registered email'}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Password</label>
+                        <input
+                          type="password"
+                          name="password"
+                          value={formData.password}
+                          onChange={handleChange}
+                          required
+                          minLength="10"
+                          className="form-input"
+                          placeholder="Enter your password"
+                        />
+                      </div>
+                  
+                  <div className="form-actions">
+                      <div className="form-section">
+                        <h3 className="heading-4">Account Details</h3>
+                        <div className="form-group">
+                          <label className="form-label">Owner Name</label>
+                          <input
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            required
+                            className="form-input"
+                            placeholder="Enter owner name"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Email</label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            required
+                            className="form-input"
+                            placeholder="Billing email"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Password</label>
+                          <input
+                            type="password"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            required
+                            minLength="10"
+                            className="form-input"
+                            placeholder="Create password"
+                          />
+                        </div>
+                      </div>
+                      <div className="form-section">
+                        <h3 className="heading-4">Store Details</h3>
+                        <div className="form-group">
+                          <label className="form-label">Store Name</label>
+                          <input
+                            type="text"
+                            name="storeName"
+                            value={formData.storeName}
+                            onChange={handleChange}
+                            required
+                            minLength="3"
+                            className="form-input"
+                            placeholder="Retail store name"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Store Type</label>
+                          <select name="storeType" value={formData.storeType} onChange={handleChange} className="form-select">
+                            <option value="Retail">Retail</option>
+                            <option value="Supermarket">Supermarket</option>
+                            <option value="Hotel/Restaurant">Hotel / Restaurant</option>
+                            <option value="Distributor">Distributor</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">GST Number (optional)</label>
+                          <input
+                            type="text"
+                            name="gstNumber"
+                            value={formData.gstNumber}
+                            onChange={handleChange}
+                            className="form-input"
+                            placeholder="GSTIN"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Contact Number</label>
+                          <input
+                            type="tel"
+                            name="contactNumber"
+                            value={formData.contactNumber}
+                            onChange={handleChange}
+                            required
+                            inputMode="tel"
+                            minLength="10"
+                            maxLength="15"
+                            className="form-input"
+                            placeholder="Store contact"
+                          />
+                          <p className="helper-text">Primary phone number used for delivery coordination.</p>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Address Line 1</label>
+                          <input
+                            type="text"
+                            name="addressLine1"
+                            value={formData.addressLine1}
+                            onChange={handleChange}
+                            required
+                            className="form-input"
+                            placeholder="Address line 1"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Address Line 2</label>
+                          <input
+                            type="text"
+                            name="addressLine2"
+                            value={formData.addressLine2}
+                            onChange={handleChange}
+                            className="form-input"
+                            placeholder="Address line 2"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">City</label>
+                          <input
+                            type="text"
+                            name="city"
+                            value={formData.city}
+                            onChange={handleChange}
+                            required
+                            className="form-input"
+                            placeholder="City"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">State</label>
+                          <input
+                            type="text"
+                            name="state"
+                            value={formData.state}
+                            onChange={handleChange}
+                            required
+                            className="form-input"
+                            placeholder="State"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Pincode</label>
+                          <input
+                            type="number"
+                            name="pincode"
+                            value={formData.pincode}
+                            onChange={handleChange}
+                            required
+                            minLength="6"
+                            maxLength="6"
+                            className="form-input"
+                            placeholder="Pincode"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="form-actions">
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary btn-lg btn-block"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="loading-spinner"></span>
+                          Processing...
+                        </>
+                      ) : (
+                        'Sign In'
+                      )}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="form-footer">
+                  <p className="text-small">
+                    Don't have an account?{' '}
+                    <button 
+                      type="button" 
+                      className="btn btn-link"
+                      onClick={() => navigate('/register')}
+                    >
+                      Register here
+                    </button>
+                  </p>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+        </div>
+      </PageContent>
+    </PageWrapper>
+  );
+};
+
+export default Login;

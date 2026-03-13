@@ -1,50 +1,5 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
-
-const storeInfoSchema = new mongoose.Schema({
-  storeName: {
-    type: String,
-    trim: true,
-    required: [true, 'Store name is required']
-  },
-  storeType: {
-    type: String,
-    trim: true,
-    default: 'Retail'
-  },
-  gstNumber: {
-    type: String,
-    trim: true
-  },
-  contactNumber: {
-    type: String,
-    trim: true
-  },
-  addressLine1: {
-    type: String,
-    trim: true,
-    required: [true, 'Address line 1 is required']
-  },
-  addressLine2: {
-    type: String,
-    trim: true
-  },
-  city: {
-    type: String,
-    trim: true,
-    required: [true, 'City is required']
-  },
-  state: {
-    type: String,
-    trim: true,
-    required: [true, 'State is required']
-  },
-  pincode: {
-    type: String,
-    trim: true,
-    required: [true, 'Pincode is required']
-  }
-}, { _id: false });
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 // User Schema - stores both buyers and admin information
 const userSchema = new mongoose.Schema({
@@ -77,8 +32,81 @@ const userSchema = new mongoose.Schema({
     uppercase: true,
     trim: true
   },
-  storeInfo: {
-    type: storeInfoSchema,
+  // Store Information - Individual fields
+  storeName: {
+    type: String,
+    trim: true,
+    required: function () {
+      return this.role === 'user';
+    }
+  },
+  storeType: {
+    type: String,
+    trim: true,
+    default: 'Retail'
+  },
+  gstNumber: {
+    type: String,
+    trim: true
+  },
+  contactNumber: {
+    type: String,
+    trim: true,
+    required: function () {
+      return this.role === 'user';
+    }
+  },
+  // Address Information - Individual fields
+  addressLine1: {
+    type: String,
+    trim: true,
+    required: function () {
+      return this.role === 'user';
+    }
+  },
+  addressLine2: {
+    type: String,
+    trim: true
+  },
+  city: {
+    type: String,
+    trim: true,
+    required: function () {
+      return this.role === 'user';
+    }
+  },
+  state: {
+    type: String,
+    trim: true,
+    required: function () {
+      return this.role === 'user';
+    }
+  },
+  pincode: {
+    type: String,
+    trim: true,
+    required: function () {
+      return this.role === 'user';
+    }
+  },
+  // Owner Information - Individual fields
+  ownerName: {
+    type: String,
+    trim: true,
+    required: function () {
+      return this.role === 'user';
+    }
+  },
+  ownerEmail: {
+    type: String,
+    trim: true,
+    required: function () {
+      return this.role === 'user';
+    }
+  },
+  ownerPhone: {
+    type: String,
+    trim: true,
     required: function () {
       return this.role === 'user';
     }
@@ -104,4 +132,4 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 
 const User = mongoose.model('User', userSchema);
 
-export default User;
+module.exports = User;

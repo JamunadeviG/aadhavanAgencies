@@ -1,7 +1,7 @@
-import Product from '../models/Product.js';
+const Product = require('../models/Product.js');
 
 // Create a new product
-export const createProduct = async (req, res) => {
+const createProduct = async (req, res) => {
   try {
     const { name, category, unit, price, stock } = req.body;
 
@@ -37,7 +37,7 @@ export const createProduct = async (req, res) => {
 };
 
 // Get all products
-export const getProducts = async (req, res) => {
+const getProducts = async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 }); // Sort by newest first
 
@@ -56,7 +56,7 @@ export const getProducts = async (req, res) => {
 };
 
 // Update a product
-export const updateProduct = async (req, res) => {
+const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, category, unit, price, stock } = req.body;
@@ -95,7 +95,7 @@ export const updateProduct = async (req, res) => {
 };
 
 // Delete a product
-export const deleteProduct = async (req, res) => {
+const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -119,4 +119,11 @@ export const deleteProduct = async (req, res) => {
       error: error.message
     });
   }
+};
+
+module.exports = {
+  createProduct,
+  getProducts,
+  updateProduct,
+  deleteProduct
 };

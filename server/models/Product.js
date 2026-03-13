@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 // Product Schema - stores grocery product information
 const productSchema = new mongoose.Schema({
@@ -35,4 +35,4 @@ const productSchema = new mongoose.Schema({
 
 const Product = mongoose.model('Product', productSchema);
 
-export default Product;
+module.exports = Product;

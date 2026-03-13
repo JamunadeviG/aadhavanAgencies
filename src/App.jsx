@@ -31,7 +31,7 @@ function App() {
           path="/" 
           element={
             isAuthenticated() 
-              ? <Navigate to={user?.role === 'admin' ? '/admin-home' : '/user-home'} replace />
+              ? <Navigate to={user?.role === 'admin' ? '/dashboard' : '/user-home'} replace />
               : <Home />
           } 
         />
@@ -42,16 +42,6 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['user']}>
               <UserHome />
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* Admin home page - protected route for logged-in admins */}
-        <Route
-          path="/admin-home"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminHome />
             </ProtectedRoute>
           }
         />
@@ -67,7 +57,7 @@ function App() {
           path="/login"
           element={
             isAuthenticated()
-              ? <Navigate to={(getStoredUser()?.role === 'admin' ? '/admin-home' : '/user-home')} replace />
+              ? <Navigate to={(getStoredUser()?.role === 'admin' ? '/dashboard' : '/user-home')} replace />
               : <Login />
           }
         />
@@ -77,7 +67,7 @@ function App() {
           path="/register"
           element={
             isAuthenticated()
-              ? <Navigate to={(getStoredUser()?.role === 'admin' ? '/admin-home' : '/user-home')} replace />
+              ? <Navigate to={(getStoredUser()?.role === 'admin' ? '/dashboard' : '/user-home')} replace />
               : <Register />
           }
         />
@@ -155,6 +145,9 @@ function App() {
             </ProtectedRoute>
           }
         />
+        
+        {/* Fallback route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

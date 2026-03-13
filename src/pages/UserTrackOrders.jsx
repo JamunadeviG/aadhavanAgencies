@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStoredUser } from '../services/authService.js';
+import { getUserOrders } from '../services/orderService.js';
+import { PageWrapper, PageContent } from '../components/Layout.jsx';
 import './UserTrackOrders.css';
 
 const UserTrackOrders = () => {
@@ -8,6 +10,7 @@ const UserTrackOrders = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -19,25 +22,34 @@ const UserTrackOrders = () => {
   const [orderToCancel, setOrderToCancel] = useState(null);
 
   useEffect(() => {
+    // Clear any test data from localStorage
+    localStorage.removeItem('orders');
+    
     loadOrders();
     // Check if user is admin
     setIsAdmin(user?.role === 'admin');
-  }, []);
+  }, [user?.id]);
 
-  const loadOrders = () => {
+  const loadOrders = async () => {
     try {
-      const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      // Filter orders for current user (or show all if admin)
-      const userOrders = isAdmin 
-        ? savedOrders 
-        : savedOrders.filter(order => 
-            order.userId === user?.id || order.customerEmail === user?.email
-          );
-      setOrders(userOrders);
+      console.log('🔍 UserTrackOrders: Fetching orders for user:', user.id);
+      
+      if (!user?.id) {
+        setError('User not found. Please login again.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await getUserOrders(user.id);
+      console.log('🔍 UserTrackOrders: API Response:', response);
+      console.log('🔍 UserTrackOrders: Orders from API:', response.orders);
+      
+      setOrders(response.orders || []);
+      setLoading(false);
     } catch (error) {
-      console.error('Error loading orders:', error);
+      console.error('🔍 UserTrackOrders: Error loading orders:', error);
+      setError(error.message || 'Failed to load your orders');
       setOrders([]);
-    } finally {
       setLoading(false);
     }
   };

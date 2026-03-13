@@ -1,13 +1,13 @@
-import User from '../models/User.js';
+const User = require('../models/User.js');
 
-export const DEFAULT_ADMIN = {
+const DEFAULT_ADMIN = {
   name: 'Aadhavan Admin',
   email: 'aadhavan@gmail.com',
   password: 'aadhavan',
   role: 'admin'
 };
 
-export const ensureDefaultAdmin = async () => {
+const ensureDefaultAdmin = async () => {
   try {
     const existingAdmin = await User.findOne({ email: DEFAULT_ADMIN.email });
 
@@ -41,3 +41,5 @@ export const ensureDefaultAdmin = async () => {
     throw error;
   }
 };
+
+module.exports = { ensureDefaultAdmin };

@@ -1,12 +1,12 @@
-import express from 'express';
-import { register, login, getProfile } from '../controllers/authController.js';
-import { protect } from '../middleware/auth.js';
+const express = require('express');
+const authController = require('../controllers/authController.js');
+const { protect } = require('../middleware/auth.js');
 
 const router = express.Router();
 
 // Public routes - no authentication required
-router.post('/register', register);
-router.post('/login', login);
-router.get('/profile', protect, getProfile);
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+router.get('/profile', protect, authController.getProfile);
 
-export default router;
+module.exports = router;

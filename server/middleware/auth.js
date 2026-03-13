@@ -1,7 +1,7 @@
-import jwt from 'jsonwebtoken';
+const jwt = require('jsonwebtoken');
 
 // Middleware to protect routes - verifies JWT token and attaches user info
-export const protect = (req, res, next) => {
+const protect = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -18,9 +18,11 @@ export const protect = (req, res, next) => {
 };
 
 // Admin-only guard
-export const adminOnly = (req, res, next) => {
+const adminOnly = (req, res, next) => {
   if (req.user?.role !== 'admin') {
     return res.status(403).json({ message: 'Admin only' });
   }
   next();
 };
+
+module.exports = { protect, adminOnly };
