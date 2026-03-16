@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStoredUser } from '../services/authService.js';
@@ -25,59 +26,36 @@ const Cart = () => {
   const [orderDetails, setOrderDetails] = useState(null);
   const [error, setError] = useState('');
 
-  // Function to load cart from database
-  const loadCart = async (retryCount = 0) => {
+  // Function to load cart from database with improved error handling
+  const loadCart = async () => {
     try {
-      console.log(`🛒 CART PAGE: Loading cart from database... (Attempt ${retryCount + 1})`);
+      console.log('🛒 CART PAGE: Loading cart from database...');
       setLoading(true);
       setError('');
       
-      // Try to get cart with shorter timeout
+      const response = await getCart();
+      console.log('🛒 Cart response:', response);
+      
+      // Handle different response formats
       let items = [];
-      try {
-        const response = await Promise.race([
-          getCart(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('API timeout')), 1500))
-        ]);
-        
-        console.log('🛒 Cart items from service:', response);
-        
-        // Ensure we have an array
-        if (Array.isArray(response)) {
-          items = response;
-        } else if (response && Array.isArray(response.items)) {
-          items = response.items;
-        } else if (response && response.cart && Array.isArray(response.cart.items)) {
-          items = response.cart.items;
-        } else {
-          console.warn('🛒 Unexpected cart data format:', response);
-          items = [];
-        }
-      } catch (apiError) {
-        console.error('🛒 API Error loading cart:', apiError);
-        
-        // Retry once if it's a timeout error
-        if (apiError.message === 'API timeout' && retryCount === 0) {
-          console.log('🛒 Retrying cart load...');
-          return loadCart(retryCount + 1);
-        }
-        
-        // Show user-friendly error message
-        if (apiError.message === 'API timeout') {
-          setError('Cart loading timed out. Showing empty cart.');
-        } else {
-          setError('Unable to connect to cart service. Showing empty cart.');
-        }
-        items = []; // Fallback to empty cart
+      if (Array.isArray(response)) {
+        items = response;
+      } else if (response && Array.isArray(response.items)) {
+        items = response.items;
+      } else if (response && response.cart && Array.isArray(response.cart.items)) {
+        items = response.cart.items;
+      } else {
+        console.warn('🛒 Unexpected cart data format:', response);
+        items = [];
       }
       
       console.log('🛒 Final cart items:', items);
       setCartItems(items);
       
     } catch (error) {
-      console.error('🛒 CART PAGE: Error loading cart from database:', error);
-      setCartItems([]); // Set empty array on error
-      setError('Cart service unavailable. Showing empty cart.');
+      console.error('🛒 CART PAGE: Error loading cart:', error);
+      setCartItems([]);
+      setError('Unable to load cart. Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -599,32 +577,7 @@ const Cart = () => {
   };
 
   useEffect(() => {
-    // Add safety timeout to prevent hanging
-    const safetyTimeout = setTimeout(() => {
-      if (loading) {
-        console.log('🛒 SAFETY: Cart loading taking too long, showing empty cart');
-        setLoading(false);
-        setCartItems([]);
-        setError('Cart loading is taking too long. Showing empty cart.');
-      }
-    }, 2000); // Reduced to 2 seconds
-
-    // Start cart loading with immediate fallback
-    const immediateFallback = setTimeout(() => {
-      if (loading) {
-        console.log('🛒 IMMEDIATE: Showing empty cart immediately');
-        setLoading(false);
-        setCartItems([]);
-        setError('');
-      }
-    }, 1000); // Show empty cart after 1 second if still loading
-
     loadCart();
-    
-    return () => {
-      clearTimeout(safetyTimeout);
-      clearTimeout(immediateFallback);
-    };
   }, []);
 
   // Listen for cart updates from other components

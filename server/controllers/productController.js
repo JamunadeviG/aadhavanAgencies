@@ -13,13 +13,21 @@ const createProduct = async (req, res) => {
       });
     }
 
+    // Handle image upload
+    let imagePath = null;
+    if (req.file) {
+      imagePath = `/uploads/${req.file.filename}`;
+      console.log('📸 Product image uploaded:', imagePath);
+    }
+
     // Create product
     const product = await Product.create({
       name,
       category,
       unit,
       price,
-      stock
+      stock,
+      image: imagePath
     });
 
     res.status(201).json({
@@ -76,6 +84,13 @@ const updateProduct = async (req, res) => {
     if (unit !== undefined) product.unit = unit;
     if (price !== undefined) product.price = price;
     if (stock !== undefined) product.stock = stock;
+
+    // Handle image update
+    if (req.file) {
+      const imagePath = `/uploads/${req.file.filename}`;
+      product.image = imagePath;
+      console.log('📸 Product image updated:', imagePath);
+    }
 
     // Save updated product
     await product.save();

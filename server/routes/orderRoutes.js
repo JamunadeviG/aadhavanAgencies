@@ -211,20 +211,103 @@ router.get('/:id', protect, async (req, res) => {
 router.put('/:id/status', protect, adminOnly, async (req, res) => {
   try {
     const { status } = req.body;
-    const order = await Order.findById(req.params.id);
+    const orderId = req.params.id;
+    
+    console.log('📦 Updating order status for ID:', orderId);
+    console.log('📦 New status:', status);
+    
+    // Update order by custom orderId field (not _id)
+    const order = await Order.findOneAndUpdate(
+      { orderId: orderId },
+      { status: status || status, updatedAt: new Date() },
+      { new: true }
+    );
     
     if (!order) {
+      console.log('📦 Order not found with ID:', orderId);
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
     
-    order.status = status || order.status;
-    await order.save();
-    
-    console.log('📦 Updated order status:', order._id, 'to:', status);
+    console.log('📦 Updated order status:', order.orderId, 'to:', order.status);
     res.json({ success: true, order });
   } catch (err) {
     console.error('📦 UPDATE ORDER STATUS ERROR:', err);
+    console.error('📦 Error stack:', err.stack);
     res.status(500).json({ success: false, message: 'Failed to update order status', error: err.message });
+  }
+});
+
+// GET /api/orders/stats - Get order statistics (admin)
+router.get('/stats', protect, adminOnly, async (req, res) => {
+  try {
+    console.log('📦 Fetching order statistics...');
+    
+    // Get total orders count
+    const totalOrders = await Order.countDocuments();
+    
+    // Get orders by status
+    const pendingOrders = await Order.countDocuments({ status: 'pending' });
+    const confirmedOrders = await Order.countDocuments({ status: 'confirmed' });
+    const processingOrders = await Order.countDocuments({ status: 'processing' });
+    const shippedOrders = await Order.countDocuments({ status: 'shipped' });
+    const deliveredOrders = await Order.countDocuments({ status: 'delivered' });
+    const cancelledOrders = await Order.countDocuments({ status: 'cancelled' });
+    
+    // Get recent orders (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentOrders = await Order.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+    
+    // Get total revenue
+    const revenueResult = await Order.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
+      { $group: { _id: null, totalRevenue: { $sum: '$total' } } }
+    ]);
+    const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
+    
+    // Get average order value
+    const avgOrderResult = await Order.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
+      { $group: { _id: null, avgOrderValue: { $avg: '$total' } } }
+    ]);
+    const avgOrderValue = avgOrderResult.length > 0 ? Math.round(avgOrderResult[0].avgOrderValue) : 0;
+    
+    console.log('📦 Order stats calculated:', {
+      totalOrders,
+      pendingOrders,
+      confirmedOrders,
+      processingOrders,
+      shippedOrders,
+      deliveredOrders,
+      cancelledOrders,
+      recentOrders,
+      totalRevenue,
+      avgOrderValue
+    });
+    
+    res.json({
+      success: true,
+      stats: {
+        totalOrders,
+        pendingOrders,
+        confirmedOrders,
+        processingOrders,
+        shippedOrders,
+        deliveredOrders,
+        cancelledOrders,
+        recentOrders,
+        totalRevenue,
+        avgOrderValue,
+        completionRate: totalOrders > 0 ? Math.round((deliveredOrders / totalOrders) * 100) : 0
+      }
+    });
+  } catch (error) {
+    console.error('📦 Error fetching order statistics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch order statistics',
+      error: error.message
+    });
   }
 });
 

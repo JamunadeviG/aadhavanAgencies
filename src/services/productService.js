@@ -11,18 +11,50 @@ export const getProducts = async () => {
   }
 };
 
-export const createProduct = async (productData) => {
+export const createProduct = async (productData, imageFile) => {
   try {
-    const response = await api.post('/products', productData);
+    const formData = new FormData();
+    
+    // Add product fields
+    Object.keys(productData).forEach(key => {
+      formData.append(key, productData[key]);
+    });
+    
+    // Add image file if provided
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+    
+    const response = await api.post('/products', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Failed to create product' };
   }
 };
 
-export const updateProduct = async (id, productData) => {
+export const updateProduct = async (id, productData, imageFile) => {
   try {
-    const response = await api.put(`/products/${id}`, productData);
+    const formData = new FormData();
+    
+    // Add product fields
+    Object.keys(productData).forEach(key => {
+      formData.append(key, productData[key]);
+    });
+    
+    // Add image file if provided
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+    
+    const response = await api.put(`/products/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Failed to update product' };

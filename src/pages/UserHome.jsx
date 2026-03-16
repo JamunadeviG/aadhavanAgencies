@@ -125,10 +125,15 @@ const UserHome = () => {
     // Load products for quick order
     const loadProducts = async () => {
       try {
+        setLoading(true);
         const response = await getProducts();
-        setProducts(response.products || []);
+        console.log('📦 UserHome Products received:', response.products);
+        const productsData = response.products || [];
+        console.log('🖼️ UserHome Product images check:', productsData.map(p => ({ name: p.name, image: p.image })));
+        setProducts(productsData);
       } catch (error) {
         console.error('Failed to load products:', error);
+        setError('Failed to load products');
       } finally {
         setLoading(false);
       }
@@ -328,7 +333,7 @@ const UserHome = () => {
                         <Card hover className="offer-card">
                           <div className="offer-image">
                             <img 
-                              src={`https://images.unsplash.com/photo-${1504674900247 + index}-0877df9cc836?auto=format&fit=crop&w=400&q=60`}
+                              src={`http://localhost:5001/uploads/${index === 0 ? '1000068610.jpg' : index === 1 ? '1000068612.jpg' : '1000068613.jpg'}`}
                               alt={offer.title}
                             />
                           </div>
@@ -395,10 +400,21 @@ const UserHome = () => {
                 return (
                   <Card key={productWithId.id} hover className="product-card">
                     <div className="product-image">
-                      <img 
-                        src={`https://images.unsplash.com/photo-${1504674900247 + Math.floor(Math.random() * 100)}-0877df9cc836?auto=format&fit=crop&w=300&q=60`}
-                        alt={productWithId.name}
-                      />
+                      {productWithId.image && productWithId.image.trim() !== '' ? (
+                        <img 
+                          src={`http://localhost:5001${productWithId.image}`}
+                          alt={productWithId.name}
+                          onError={(e) => {
+                            console.log('Image failed to load, using fallback:', productWithId.image);
+                            e.target.src = `https://images.unsplash.com/photo-${1504674900247 + Math.floor(Math.random() * 100)}-0877df9cc836?auto=format&fit=crop&w=300&q=60`;
+                          }}
+                        />
+                      ) : (
+                        <img 
+                          src={`https://images.unsplash.com/photo-${1504674900247 + Math.floor(Math.random() * 100)}-0877df9cc836?auto=format&fit=crop&w=300&q=60`}
+                          alt={productWithId.name}
+                        />
+                      )}
                     </div>
                     <CardBody>
                       <h3 className="heading-5">{productWithId.name}</h3>

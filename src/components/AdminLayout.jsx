@@ -35,7 +35,8 @@ const AdminLayout = ({ active, title, children }) => {
   const navLinks = [
     { label: 'Dashboard', key: 'dashboard', path: '/dashboard' },
     { label: 'Products', key: 'products', path: '/products' },
-    { label: 'Track Order', key: 'track', path: '/track-orders' },
+    { label: 'Manage Offers', key: 'offers', path: '/offers' },
+    { label: 'Track Order', key: 'track-orders', path: '/admin-track-orders' },
     { label: 'Users & Customers', key: 'users', path: '/users' }
   ];
 
@@ -70,44 +71,14 @@ const AdminLayout = ({ active, title, children }) => {
       </header>
 
       <div className="container admin-wrap">
-        <aside className="admin-side card">
-          <div className="admin-user">
-            <div className="admin-avatar">{(user?.name || 'A').slice(0, 1).toUpperCase()}</div>
-            <div>
-              <div className="admin-user-name">{user?.name || 'Admin'}</div>
-              <div className="admin-user-role">Administrator</div>
-            </div>
-          </div>
-
-          <div className="admin-menu">
-            {navLinks.map((link) => (
-              <button
-                key={link.key}
-                className={`admin-link ${active === link.key ? 'active' : ''}`}
-                onClick={() => go(link.path)}
-              >
-                {link.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="admin-note">
-            Tip: Keep stock updated daily to avoid stockouts.
-          </div>
-
-          <button className="btn btn-danger" onClick={handleLogout}>
-            Logout
-          </button>
-        </aside>
-
-        <main className="admin-main card">
-          <div className="admin-main-head">
+        <main className="admin-main-full card">
+          <div className="admin-main-full-head">
             <div>
               <div className="admin-main-kicker">Admin workspace</div>
               <h1>{title}</h1>
             </div>
           </div>
-          <div className="admin-main-body">{children}</div>
+          <div className="admin-main-full-body">{children}</div>
         </main>
       </div>
     </div>

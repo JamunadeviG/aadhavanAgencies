@@ -15,6 +15,8 @@ const Products = () => {
     price: '',
     stock: ''
   });
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -42,6 +44,20 @@ const Products = () => {
     setError('');
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+      setError('');
+    }
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -57,10 +73,10 @@ const Products = () => {
 
       if (editingProduct) {
         // Update existing product
-        await updateProduct(editingProduct._id, productData);
+        await updateProduct(editingProduct._id, productData, selectedImage);
       } else {
         // Create new product
-        await createProduct(productData);
+        await createProduct(productData, selectedImage);
       }
 
       // Reset form and refresh products
@@ -107,6 +123,8 @@ const Products = () => {
     setEditingProduct(null);
     setShowForm(false);
     setError('');
+    setSelectedImage(null);
+    setImagePreview('');
   };
 
   return (
@@ -200,6 +218,32 @@ const Products = () => {
                 </div>
               </div>
 
+              <div className="form-row">
+                <div className="form-group full-width">
+                  <label>Product Image</label>
+                  <div className="image-upload-container">
+                    <input
+                      type="file"
+                      id="productImage"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="image-input"
+                    />
+                    <label htmlFor="productImage" className="image-upload-label">
+                      {selectedImage ? selectedImage.name : 'Choose image file...'}
+                    </label>
+                    {imagePreview && (
+                      <div className="image-preview-container">
+                        <img src={imagePreview} alt="Product preview" className="image-preview" />
+                        <button type="button" onClick={clearImage} className="clear-image-btn">
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="form-actions">
                 <button type="button" onClick={resetForm} className="btn">
                   Cancel
@@ -229,6 +273,7 @@ const Products = () => {
             <table className="prod-table">
               <thead>
                 <tr>
+                  <th>Image</th>
                   <th>Name</th>
                   <th>Category</th>
                   <th>Unit</th>
@@ -240,6 +285,23 @@ const Products = () => {
               <tbody>
                 {products.map((product) => (
                   <tr key={product._id}>
+                    <td>
+                      {product.image && product.image.trim() !== '' ? (
+                        <img 
+                          src={`http://localhost:5001${product.image}`} 
+                          alt={product.name}
+                          className="product-table-image"
+                          onError={(e) => {
+                            console.log('Product table image failed to load:', product.image);
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div className="product-no-image" style={{display: product.image && product.image.trim() !== '' ? 'none' : 'flex'}}>
+                        No Image
+                      </div>
+                    </td>
                     <td className="td-strong">{product.name}</td>
                     <td>{product.category}</td>
                     <td>{product.unit}</td>

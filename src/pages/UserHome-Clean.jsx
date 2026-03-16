@@ -21,7 +21,10 @@ const UserHome = () => {
     const loadProducts = async () => {
       try {
         const response = await getProducts();
-        setProducts(response.products || []);
+        console.log('📦 Products received:', response.products);
+        const productsData = response.products || [];
+        console.log('🖼️ Product images check:', productsData.map(p => ({ name: p.name, image: p.image })));
+        setProducts(productsData);
       } catch (error) {
         console.error('Failed to load products:', error);
       } finally {
@@ -114,7 +117,7 @@ const UserHome = () => {
                         <div className="offer-card">
                           <div className="offer-image">
                             <img 
-                              src={`https://images.unsplash.com/photo-${1504674900247 + index}-0877df9cc836?auto=format&fit=crop&w=400&q=60`}
+                              src={`http://localhost:5001/uploads/${index === 0 ? '1000068610.jpg' : index === 1 ? '1000068612.jpg' : '1000068613.jpg'}`}
                               alt={offer.title}
                             />
                           </div>
@@ -173,10 +176,21 @@ const UserHome = () => {
                 {products.slice(0, 8).map((product) => (
                   <div key={product.id} className="product-card">
                     <div className="product-image">
-                      <img 
-                        src={`https://images.unsplash.com/photo-${1504674900247 + Math.floor(Math.random() * 100)}-0877df9cc836?auto=format&fit=crop&w=300&q=60`}
-                        alt={product.name}
-                      />
+                      {product.image && product.image.trim() !== '' ? (
+                        <img 
+                          src={`http://localhost:5001${product.image}`}
+                          alt={product.name}
+                          onError={(e) => {
+                            console.log('Image failed to load, using fallback:', product.image);
+                            e.target.src = `https://images.unsplash.com/photo-${1504674900247 + Math.floor(Math.random() * 100)}-0877df9cc836?auto=format&fit=crop&w=300&q=60`;
+                          }}
+                        />
+                      ) : (
+                        <img 
+                          src={`https://images.unsplash.com/photo-${1504674900247 + Math.floor(Math.random() * 100)}-0877df9cc836?auto=format&fit=crop&w=300&q=60`}
+                          alt={product.name}
+                        />
+                      )}
                     </div>
                     <div className="product-info">
                       <h3>{product.name}</h3>

@@ -8,8 +8,10 @@ import UserHome from './pages/UserHome.jsx';
 import AdminHome from './pages/AdminHome.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Products from './pages/Products.jsx';
+import Offers from './pages/Offers.jsx';
 import AddOffer from './pages/AddOffer.jsx';
 import TrackOrders from './pages/TrackOrders.jsx';
+import AdminTrackOrders from './pages/AdminTrackOrders.jsx';
 import Users from './pages/Users.jsx';
 import UserDashboard from './pages/UserDashboard.jsx';
 import Orders from './pages/Orders.jsx';
@@ -133,7 +135,7 @@ function App() {
           path="/admin-track-orders"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <TrackOrders />
+              <AdminTrackOrders />
             </ProtectedRoute>
           }
         />
@@ -142,6 +144,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/offers"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Offers />
             </ProtectedRoute>
           }
         />

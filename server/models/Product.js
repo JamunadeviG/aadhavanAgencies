@@ -28,6 +28,11 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Stock quantity is required'],
     min: [0, 'Stock cannot be negative'],
     default: 0
+  },
+  image: {
+    type: String,
+    default: null,
+    trim: true
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

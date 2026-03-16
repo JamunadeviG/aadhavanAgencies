@@ -255,4 +255,53 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
   }
 });
 
+// GET /api/users/stats - Get user statistics (admin)
+router.get('/stats', protect, adminOnly, async (req, res) => {
+  try {
+    console.log('👥 Fetching user statistics...');
+    
+    // Get total users count
+    const totalUsers = await User.countDocuments();
+    
+    // Get users by role
+    const adminCount = await User.countDocuments({ role: 'admin' });
+    const userCount = await User.countDocuments({ role: 'user' });
+    
+    // Get recent users (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentUsers = await User.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+    
+    // Get active users (users who have placed orders)
+    const activeUsers = await User.distinct('userId').length;
+    
+    console.log('👥 User stats calculated:', {
+      totalUsers,
+      adminCount,
+      userCount,
+      recentUsers,
+      activeUsers
+    });
+    
+    res.json({
+      success: true,
+      stats: {
+        totalUsers,
+        adminCount,
+        userCount,
+        recentUsers,
+        activeUsers,
+        recentGrowth: totalUsers > 0 ? Math.round((recentUsers / totalUsers) * 100) : 0
+      }
+    });
+  } catch (error) {
+    console.error('👥 Error fetching user statistics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user statistics',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

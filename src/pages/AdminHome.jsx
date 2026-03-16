@@ -1,34 +1,77 @@
 import { useEffect, useState } from 'react';
-import { getOffers } from '../utils/offerStorage.js';
 import { getStoredUser } from '../services/authService.js';
-import { PageWrapper, PageContent, Section, Card, CardBody, Grid, Flex } from '../components/Layout.jsx';
+import { getDashboardData } from '../services/adminService.js';
+import { PageWrapper, PageContent, Section, Card, CardBody, Grid, Flex, LoadingState } from '../components/Layout.jsx';
 import { AdminNavigation } from '../components/AdminNavigation.jsx';
 import { CommonFooter } from '../components/CommonFooter.jsx';
 import './AdminHome.css';
 
 const AdminHome = () => {
   const user = getStoredUser();
-  const [offers, setOffers] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [stats, setStats] = useState({
     totalOffers: 0,
     activeOffers: 0,
     totalUsers: 0,
-    recentOrders: 0
+    recentOrders: 0,
+    totalOrders: 0,
+    pendingOrders: 0,
+    deliveredOrders: 0,
+    totalRevenue: 0,
+    totalProducts: 0,
+    lowStockProducts: 0
   });
 
   useEffect(() => {
-    const offersData = getOffers();
-    setOffers(offersData);
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        
+        // Fetch real dashboard statistics
+        const data = await getDashboardData();
+        setDashboardData(data);
+        
+        // Update stats with real data
+        setStats({
+          totalOffers: 0,
+          activeOffers: 0,
+          totalUsers: data.users?.stats?.totalUsers || 0,
+          recentOrders: data.orders?.stats?.recentOrders || 0,
+          totalOrders: data.orders?.stats?.totalOrders || 0,
+          pendingOrders: data.orders?.stats?.pendingOrders || 0,
+          deliveredOrders: data.orders?.stats?.deliveredOrders || 0,
+          totalRevenue: data.orders?.stats?.totalRevenue || 0,
+          totalProducts: data.products?.stats?.totalProducts || 0,
+          lowStockProducts: data.products?.stats?.lowStockProducts || 0
+        });
+        
+        console.log('📊 Dashboard data loaded:', data);
+      } catch (error) {
+        console.error('📊 Error fetching dashboard data:', error);
+        setError(error.message || 'Failed to load dashboard data');
+        
+        // Fallback to basic stats
+        setStats({
+          totalOffers: 0,
+          activeOffers: 0,
+          totalUsers: 0,
+          recentOrders: 0,
+          totalOrders: 0,
+          pendingOrders: 0,
+          deliveredOrders: 0,
+          totalRevenue: 0,
+          totalProducts: 0,
+          lowStockProducts: 0
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    // Calculate stats from offers data
-    const activeOffers = offersData.filter(offer => new Date(offer.validTill) > new Date()).length;
-    
-    setStats({
-      totalOffers: offersData.length,
-      activeOffers: activeOffers.length,
-      totalUsers: Math.floor(Math.random() * 50) + 10, // Mock data - in real app, this would come from database
-      recentOrders: Math.floor(Math.random() * 20) + 5 // Mock data - in real app, this would come from database
-    });
+    fetchDashboardData();
   }, []);
 
   return (
@@ -59,100 +102,68 @@ const AdminHome = () => {
         <Section spacing="large">
           <div className="section-header">
             <h2 className="heading-2">Business Overview</h2>
+            {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
           </div>
-          <Grid cols={4} gap="6">
-            <Card hover className="stat-card">
-              <CardBody className="text-center">
-                <div className="stat-icon">📊</div>
-                <h3 className="heading-3">{stats.totalOffers}</h3>
-                <p className="text-small">Total Offers</p>
-              </CardBody>
-            </Card>
-            <Card hover className="stat-card">
-              <CardBody className="text-center">
-                <div className="stat-icon">🎯</div>
-                <h3 className="heading-3">{stats.activeOffers}</h3>
-                <p className="text-small">Active Offers</p>
-              </CardBody>
-            </Card>
-            <Card hover className="stat-card">
-              <CardBody className="text-center">
-                <div className="stat-icon">👥</div>
-                <h3 className="heading-3">{stats.totalUsers}</h3>
-                <p className="text-small">Total Users</p>
-              </CardBody>
-            </Card>
-            <Card hover className="stat-card">
-              <CardBody className="text-center">
-                <div className="stat-icon">📦</div>
-                <h3 className="heading-3">{stats.recentOrders}</h3>
-                <p className="text-small">Recent Orders</p>
-              </CardBody>
-            </Card>
-          </Grid>
-        </Section>
-
-        <Section spacing="large">
-          <div className="section-header">
-            <div>
-              <div className="section-kicker">Offer Management</div>
-              <h2 className="heading-2">Recent Promotions</h2>
-              <p className="text-body">Monitor and manage your promotional campaigns</p>
-            </div>
-            <button className="btn btn-primary" onClick={() => window.location.href = '/add-offer'}>
-              + Create New Offer
-            </button>
-          </div>
-
-          {offers.length > 0 ? (
-            <Grid cols={3} gap="6">
-              {offers.map((offer, index) => (
-                <Card key={offer.id} hover className="admin-offer-card">
-                  <div
-                    className="admin-offer-media"
-                    style={{ 
-                      backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.35)), url(https://images.unsplash.com/photo-${1504674900247 + index}-0877df9cc836?auto=format&fit=crop&w=800&q=60)`
-                    }}
-                  />
-                  <CardBody>
-                    <div className="tag hot">{offer.discount}% OFF</div>
-                    <h3 className="heading-4">{offer.title}</h3>
-                    <p className="text-small">{offer.description}</p>
-                    <div className="admin-offer-meta">
-                      <span className="text-muted">Valid till {new Date(offer.validTill).toLocaleDateString()}</span>
-                      {offer.productName && (
-                        <span className="admin-offer-product">Product: {offer.productName}</span>
-                      )}
-                      {offer.category && (
-                        <span className="admin-offer-category">Category: {offer.category}</span>
-                      )}
-                    </div>
-                    <div className="admin-offer-actions">
-                      <button className="btn btn-ghost btn-sm" onClick={() => window.location.href = '/add-offer'}>
-                        Edit
-                      </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => {
-                        if (window.confirm('Delete this offer?')) {
-                          const updatedOffers = offers.filter(o => o.id !== offer.id);
-                          setOffers(updatedOffers);
-                        }
-                      }}>
-                        Delete
-                      </button>
-                    </div>
+          
+          {loading ? (
+            <LoadingState message="Loading dashboard statistics..." />
+          ) : (
+            <>
+              <Grid cols={4} gap="6">
+                <Card hover className="stat-card">
+                  <CardBody className="text-center">
+                    <div className="stat-icon">👥</div>
+                    <h3 className="heading-3">{stats.totalUsers}</h3>
+                    <p className="text-small">Total Users</p>
                   </CardBody>
                 </Card>
-              ))}
-            </Grid>
-          ) : (
-            <Card className="admin-no-offers">
-              <CardBody className="text-center">
-                <p className="text-body">No offers created yet. Start by creating your first promotional offer!</p>
-                <button className="btn btn-primary" onClick={() => window.location.href = '/add-offer'}>
-                  Create First Offer
-                </button>
-              </CardBody>
-            </Card>
+                <Card hover className="stat-card">
+                  <CardBody className="text-center">
+                    <div className="stat-icon">�</div>
+                    <h3 className="heading-3">{stats.totalOrders}</h3>
+                    <p className="text-small">Total Orders</p>
+                  </CardBody>
+                </Card>
+                <Card hover className="stat-card">
+                  <CardBody className="text-center">
+                    <div className="stat-icon">⏳</div>
+                    <h3 className="heading-3">{stats.pendingOrders}</h3>
+                    <p className="text-small">Pending Orders</p>
+                  </CardBody>
+                </Card>
+                <Card hover className="stat-card">
+                  <CardBody className="text-center">
+                    <div className="stat-icon">✅</div>
+                    <h3 className="heading-3">{stats.deliveredOrders}</h3>
+                    <p className="text-small">Delivered Orders</p>
+                  </CardBody>
+                </Card>
+              </Grid>
+
+              <Grid cols={3} gap="6">
+                <Card hover className="stat-card">
+                  <CardBody className="text-center">
+                    <div className="stat-icon">💰</div>
+                    <h3 className="heading-3">₹{stats.totalRevenue.toLocaleString()}</h3>
+                    <p className="text-small">Total Revenue</p>
+                  </CardBody>
+                </Card>
+                <Card hover className="stat-card">
+                  <CardBody className="text-center">
+                    <div className="stat-icon">🛍️</div>
+                    <h3 className="heading-3">{stats.totalProducts}</h3>
+                    <p className="text-small">Total Products</p>
+                  </CardBody>
+                </Card>
+                <Card hover className="stat-card">
+                  <CardBody className="text-center">
+                    <div className="stat-icon">⚠️</div>
+                    <h3 className="heading-3">{stats.lowStockProducts}</h3>
+                    <p className="text-small">Low Stock Items</p>
+                  </CardBody>
+                </Card>
+              </Grid>
+            </>
           )}
         </Section>
 

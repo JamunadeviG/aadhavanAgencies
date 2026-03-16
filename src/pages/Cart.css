@@ -1,4 +1,4 @@
-/* Cart Page Styles - Consistent with Track Orders */
+/* Cart Page Styles - Clean Design */
 
 * {
   box-sizing: border-box;
@@ -9,16 +9,14 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.5;
-  color: #000000;
-  background-color: #f5ffed;
+  color: #333333;
+  background-color: #f8f9fa;
 }
 
 .cart-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5ffed 0%, #edfcf6 50%, #f5fff2 100%);
-  padding: 0;
-  margin: 0;
-  width: 100%;
+  background-color: #f8f9fa;
+  padding: 20px 0;
 }
 
 /* Cart Header */
@@ -32,9 +30,9 @@ body {
 }
 
 .cart-header h1 {
-  font-size: 32px;
+  font-size: 2rem;
   font-weight: 700;
-  color: #000000;
+  color: #333333;
   margin: 0 0 12px 0;
 }
 
@@ -45,10 +43,90 @@ body {
   gap: 8px;
 }
 
-.cart-header p {
-  font-size: 14px;
+.header-actions p {
+  font-size: 0.9rem;
   color: #666666;
+  font-weight: 400;
   margin: 0;
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 1rem;
+  color: #666666;
+  background: white;
+  border-radius: 8px;
+  max-width: 600px;
+  margin: 40px auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Buttons */
+.btn {
+  padding: 12px 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  font-family: inherit;
+  background: white;
+  color: #333;
+}
+
+.btn:hover {
+  background: #f8f9fa;
+  border-color: #999;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.btn-outline {
+  background: transparent;
+  color: #007bff;
+  border: 1px solid #007bff;
+}
+
+.btn-outline:hover {
+  background: #007bff;
+  color: white;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+  border-color: #c82333;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background: #218838;
+  border-color: #218838;
 }
 
 /* Empty Cart */

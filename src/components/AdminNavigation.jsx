@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import './AdminNavigation.css';
 
 /**
  * Admin Navigation Component
@@ -34,8 +35,13 @@ export const AdminNavigation = ({ user }) => {
     { label: 'Dashboard', path: '/dashboard', active: location.pathname === '/dashboard' },
     { label: 'Manage Orders', path: '/admin-track-orders', active: location.pathname === '/admin-track-orders' },
     { label: 'Manage Products', path: '/products', active: location.pathname === '/products' },
+    { label: 'Manage Offers', path: '/offers', active: location.pathname === '/offers' },
     { label: 'Manage Users', path: '/users', active: location.pathname === '/users' },
   ];
+
+  // Debug: Log navigation items
+  console.log('🧭 Admin Navigation Items:', navItems);
+  console.log('🧭 Current Path:', location.pathname);
 
   return (
     <div className="admin-navigation">
