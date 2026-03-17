@@ -176,7 +176,7 @@ const AdminTrackOrders = () => {
                   </td>
                   <td style={{ padding: '1rem' }}>
                     <div style={{ color: '#555' }}>
-                      {order.products?.length || 0} items
+                      {order.items?.length || 0} items
                     </div>
                   </td>
                   <td style={{ padding: '1rem' }}>

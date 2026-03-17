@@ -18,7 +18,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       const response = await getProducts();
-      
+
       // Calculate statistics
       const totalProducts = response.products?.length || 0;
       const totalStock = response.products?.reduce((sum, product) => {

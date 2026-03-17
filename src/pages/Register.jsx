@@ -5,21 +5,20 @@ import { PageWrapper, PageContent, Card, CardBody, Grid } from '../components/La
 import './Login.css';
 
 const initialFormState = {
-  name: '',
+  ownerName: '',
+  phone: '',
   email: '',
   password: '',
+  confirmPassword: '',
   storeName: '',
   storeType: 'Retail',
   gstNumber: '',
-  contactNumber: '',
+  storeNumber: '',
   addressLine1: '',
   addressLine2: '',
   city: '',
   state: '',
-  pincode: '',
-  ownerName: '',
-  ownerEmail: '',
-  ownerPhone: ''
+  pincode: ''
 };
 
 const Register = () => {
@@ -54,27 +53,33 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const sanitize = (value = '') => value.trim();
       
       const response = await register({
-        name: sanitize(formData.name),
+        name: sanitize(formData.ownerName),
         email: sanitize(formData.email),
         password: formData.password,
         storeName: sanitize(formData.storeName),
         storeType: formData.storeType,
         gstNumber: sanitize(formData.gstNumber),
-        contactNumber: sanitize(formData.contactNumber),
+        contactNumber: sanitize(formData.storeNumber),
         addressLine1: sanitize(formData.addressLine1),
         addressLine2: sanitize(formData.addressLine2),
         city: sanitize(formData.city),
         state: sanitize(formData.state),
         pincode: sanitize(formData.pincode),
         ownerName: sanitize(formData.ownerName),
-        ownerEmail: sanitize(formData.ownerEmail),
-        ownerPhone: sanitize(formData.ownerPhone),
+        ownerEmail: sanitize(formData.email),
+        ownerPhone: sanitize(formData.phone),
         role: 'user'
       });
 
@@ -86,16 +91,14 @@ const Register = () => {
       }
     } catch (err) {
       console.error('Registration error:', err);
-      let errorMessage = 'Registration failed. Please try again.';
+      let errorMessage = err.message || 'Registration failed. Please try again.';
       
-      if (err.response?.status === 409) {
+      if (err.status === 409 && !err.message) {
         errorMessage = 'User with this email already exists. Please try logging in instead.';
-      } else if (err.response?.status === 400) {
+      } else if (err.status === 400 && !err.message) {
         errorMessage = 'Invalid registration data. Please check all fields and try again.';
-      } else if (err.response?.status === 500) {
+      } else if (err.status === 500 && !err.message) {
         errorMessage = 'Server error. Please try again later.';
-      } else if (err.code === 'NETWORK_ERROR') {
-        errorMessage = 'Network error. Please check your connection and try again.';
       }
       
       setError(errorMessage);
@@ -217,12 +220,24 @@ const Register = () => {
                     <label className="form-label">Owner Name</label>
                     <input
                       type="text"
-                      name="name"
-                      value={formData.name}
+                      name="ownerName"
+                      value={formData.ownerName}
                       onChange={handleChange}
                       required
                       className="form-input"
                       placeholder="Enter owner name"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Phone</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                      className="form-input"
+                      placeholder="Enter mobile number"
                     />
                   </div>
                   <div className="form-group">
@@ -234,7 +249,7 @@ const Register = () => {
                       onChange={handleChange}
                       required
                       className="form-input"
-                      placeholder="Billing email"
+                      placeholder="Email address"
                     />
                   </div>
                   <div className="form-group">
@@ -250,44 +265,17 @@ const Register = () => {
                       placeholder="Create password"
                     />
                   </div>
-                </div>
-
-                <div className="form-section">
-                  <h3 className="heading-4">Owner Information</h3>
                   <div className="form-group">
-                    <label className="form-label">Owner Name</label>
+                    <label className="form-label">Confirm Password</label>
                     <input
-                      type="text"
-                      name="ownerName"
-                      value={formData.ownerName}
+                      type="password"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
                       onChange={handleChange}
                       required
+                      minLength="6"
                       className="form-input"
-                      placeholder="Enter owner name"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Owner Email</label>
-                    <input
-                      type="email"
-                      name="ownerEmail"
-                      value={formData.ownerEmail}
-                      onChange={handleChange}
-                      required
-                      className="form-input"
-                      placeholder="Owner email address"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Owner Phone</label>
-                    <input
-                      type="tel"
-                      name="ownerPhone"
-                      value={formData.ownerPhone}
-                      onChange={handleChange}
-                      required
-                      className="form-input"
-                      placeholder="Owner mobile number"
+                      placeholder="Confirm password"
                     />
                   </div>
                 </div>
@@ -329,15 +317,15 @@ const Register = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Contact Number</label>
+                    <label className="form-label">Store Number</label>
                     <input
                       type="tel"
-                      name="contactNumber"
-                      value={formData.contactNumber}
+                      name="storeNumber"
+                      value={formData.storeNumber}
                       onChange={handleChange}
                       required
                       className="form-input"
-                      placeholder="Mobile number"
+                      placeholder="Store contact number"
                     />
                   </div>
                 </div>

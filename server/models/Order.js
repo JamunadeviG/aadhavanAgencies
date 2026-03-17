@@ -31,13 +31,14 @@ const orderSchema = new mongoose.Schema(
     total: { type: Number, required: true },
     status: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'cancelled'],
+      enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
       default: 'pending'
     },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     userEmail: { type: String },
     userName: { type: String },
     orderDate: { type: Date, default: Date.now },
+    stockDeducted: { type: Boolean, default: false },
     items: [orderItemSchema]
   },
   { timestamps: true }

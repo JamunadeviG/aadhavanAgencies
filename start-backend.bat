@@ -21,7 +21,7 @@ if not exist ".env" (
 )
 
 echo Starting backend server...
-echo Server will run on: http://localhost:5000
+echo Server will run on: http://localhost:5003
 echo Press Ctrl+C to stop the server
 echo.
 

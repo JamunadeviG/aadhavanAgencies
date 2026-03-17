@@ -17,10 +17,7 @@ const Cart = () => {
   const [orderForm, setOrderForm] = useState({
     deliveryDate: '',
     deliveryTime: '',
-    notes: '',
-    customerName: '',
-    customerPhone: '',
-    deliveryAddress: ''
+    notes: ''
   });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
@@ -173,16 +170,6 @@ const Cart = () => {
         setError('Please login to place an order');
         return;
       }
-
-      if (!orderForm.customerName || !orderForm.customerPhone || !orderForm.deliveryAddress) {
-        console.log('❌ Missing required fields');
-        console.log('📦 customerName:', orderForm.customerName);
-        console.log('📦 customerPhone:', orderForm.customerPhone);
-        console.log('📦 deliveryAddress:', orderForm.deliveryAddress);
-        setError('Please fill in all required fields: Name, Phone, and Address');
-        return;
-      }
-      
       if (!orderForm.deliveryDate || !orderForm.deliveryTime) {
         console.log('❌ Missing delivery info');
         console.log('📦 deliveryDate:', orderForm.deliveryDate);
@@ -199,9 +186,9 @@ const Cart = () => {
 
       // Enhanced order data with complete user information
       const newOrder = {
-        customerName: orderForm.customerName?.trim() || '',
-        customerPhone: orderForm.customerPhone?.trim() || '',
-        deliveryAddress: orderForm.deliveryAddress?.trim() || '',
+        customerName: user.name || user.username || 'Customer',
+        customerPhone: user.contactNumber || user.phone || 'N/A',
+        deliveryAddress: `${user.addressLine1 || ''} ${user.addressLine2 || ''} ${user.city || ''}`.trim() || 'N/A',
         deliveryDate: orderForm.deliveryDate?.trim() || '',
         deliveryTime: orderForm.deliveryTime?.trim() || '',
         notes: orderForm.notes?.trim() || '',
@@ -379,10 +366,7 @@ const Cart = () => {
           setOrderForm({
             deliveryDate: '',
             deliveryTime: '',
-            notes: '',
-            customerName: '',
-            customerPhone: '',
-            deliveryAddress: ''
+            notes: ''
           });
         } else {
           console.log('❌ Order placement failed - success flag false');
@@ -439,10 +423,7 @@ const Cart = () => {
             setOrderForm({
               deliveryDate: '',
               deliveryTime: '',
-              notes: '',
-              customerName: '',
-              customerPhone: '',
-              deliveryAddress: ''
+              notes: ''
             });
           } else {
             console.log('❌ Service function failed');
@@ -703,85 +684,6 @@ const Cart = () => {
                 marginBottom: '20px',
                 color: '#2c3e50'
               }}>Delivery Information</h3>
-              
-              <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label htmlFor="customerName" style={{ 
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#495057',
-                  marginBottom: '6px'
-                }}>Full Name *</label>
-                <input
-                  type="text"
-                  name="customerName"
-                  value={orderForm.customerName}
-                  onChange={handleInputChange}
-                  placeholder="Enter your full name"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    backgroundColor: '#fff'
-                  }}
-                />
-              </div>
-              
-              <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label htmlFor="customerPhone" style={{ 
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#495057',
-                  marginBottom: '6px'
-                }}>Phone Number *</label>
-                <input
-                  type="tel"
-                  name="customerPhone"
-                  value={orderForm.customerPhone}
-                  onChange={handleInputChange}
-                  placeholder="Enter your phone number"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    backgroundColor: '#fff'
-                  }}
-                />
-              </div>
-              
-              <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label htmlFor="deliveryAddress" style={{ 
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#495057',
-                  marginBottom: '6px'
-                }}>Delivery Address *</label>
-                <textarea
-                  name="deliveryAddress"
-                  value={orderForm.deliveryAddress}
-                  onChange={handleInputChange}
-                  placeholder="Enter your delivery address"
-                  rows="3"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    backgroundColor: '#fff',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
               
               <div className="form-group" style={{ marginBottom: '16px' }}>
                 <label htmlFor="deliveryDate" style={{ 

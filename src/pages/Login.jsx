@@ -51,20 +51,19 @@ const Login = () => {
       const destination = response?.user?.role === 'admin' ? '/dashboard' : '/user-home';
       navigate(destination);
     } catch (err) {
-      let errorMessage = 'Login failed. Please try again.';
+      let errorMessage = err.message || 'Login failed. Please try again.';
       
-      if (err.response?.status === 401) {
+      // Fallback for cases where message is not clear enough
+      if (err.status === 401 && !err.message) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (err.response?.status === 404) {
+      } else if (err.status === 404 && !err.message) {
         errorMessage = 'User not found. Please check your email or register for a new account.';
-      } else if (err.response?.status === 403) {
+      } else if (err.status === 403 && !err.message) {
         errorMessage = 'Access denied. You do not have permission to access this account.';
-      } else if (err.response?.status === 500) {
+      } else if (err.status === 500 && !err.message) {
         errorMessage = 'Server error. Please try again later.';
-      } else if (err.code === 'NETWORK_ERROR') {
-        errorMessage = 'Network error. Please check your connection and try again.';
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStoredUser } from '../services/authService.js';
 import { getProducts } from '../services/productService.js';
+import { getActiveOffers } from '../services/offerService.js';
 import { addToCart, getCart } from '../services/cartService.js';
 import { PageWrapper, PageContent, Card, CardBody, Grid, Flex, LoadingState } from '../components/Layout.jsx';
 import { ImageNavigation } from '../components/ImageNavigation.jsx';
@@ -91,36 +92,16 @@ const UserHome = () => {
   const [showCartNotification, setShowCartNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
 
-  // Sample offers data for banner
-  const getOffers = () => {
-    return [
-      {
-        id: 1,
-        title: "Fresh Vegetables Sale",
-        description: "Get 20% off on all fresh vegetables",
-        image: "/api/placeholder/800/400",
-        discount: "20% OFF"
-      },
-      {
-        id: 2,
-        title: "Organic Fruits Special",
-        description: "Buy 1 Get 1 Free on selected organic fruits",
-        image: "/api/placeholder/800/400",
-        discount: "BOGO"
-      },
-      {
-        id: 3,
-        title: "Dairy Products Deal",
-        description: "15% off on all dairy products",
-        image: "/api/placeholder/800/400",
-        discount: "15% OFF"
-      }
-    ];
-  };
-
   useEffect(() => {
-    // Load offers for banner
-    setOffers(getOffers());
+    // Load active offers for banner
+    const loadOffers = async () => {
+      try {
+        const response = await getActiveOffers();
+        setOffers(response.offers || []);
+      } catch (error) {
+        console.error('Failed to load offers:', error);
+      }
+    };
     
     // Load products for quick order
     const loadProducts = async () => {
@@ -129,16 +110,15 @@ const UserHome = () => {
         const response = await getProducts();
         console.log('📦 UserHome Products received:', response.products);
         const productsData = response.products || [];
-        console.log('🖼️ UserHome Product images check:', productsData.map(p => ({ name: p.name, image: p.image })));
         setProducts(productsData);
       } catch (error) {
         console.error('Failed to load products:', error);
-        setError('Failed to load products');
       } finally {
         setLoading(false);
       }
     };
     
+    loadOffers();
     loadProducts();
     
     // Load cart count from database
@@ -248,13 +228,6 @@ const UserHome = () => {
         setShowCartNotification(true);
         setTimeout(() => setShowCartNotification(false), 3000);
         window.dispatchEvent(new Event('cartUpdated'));
-        
-        // Optional: Ask user if they want to go to cart
-        setTimeout(() => {
-          if (window.confirm(`${product.name} added to cart! Go to cart page?`)) {
-            navigate('/cart');
-          }
-        }, 1000);
       } else {
         console.log('❌ Cart add failed');
         console.log('Error message:', response.message);
@@ -332,21 +305,84 @@ const UserHome = () => {
                       <div key={offer.id} className="carousel-slide">
                         <Card hover className="offer-card">
                           <div className="offer-image">
-                            <img 
-                              src={`http://localhost:5001/uploads/${index === 0 ? '1000068610.jpg' : index === 1 ? '1000068612.jpg' : '1000068613.jpg'}`}
-                              alt={offer.title}
-                            />
-                          </div>
-                          <CardBody>
-                            <span className="offer-badge">{offer.discount}% OFF</span>
-                            <h3 className="heading-4">{offer.title}</h3>
-                            <p className="text-small">{offer.description}</p>
-                            <button 
-                              className="btn btn-primary"
-                              onClick={() => navigate('/products')}
+                            {offer.image ? (
+                              <img 
+                                src={offer.image}
+                                alt={offer.title}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  if (e.target.nextSibling) {
+                                    e.target.nextSibling.style.display = 'flex';
+                                  }
+                                }}
+                              />
+                            ) : null}
+                            <div 
+                              className="product-no-image" 
+                              style={{
+                                display: offer.image ? 'none' : 'flex',
+                                height: '100%',
+                                width: '100%',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: '#f3f4f6',
+                                color: '#6b7280',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                              }}
                             >
-                              Shop Now
-                            </button>
+                              No Image
+                            </div>
+                          </div>
+                          <CardBody className="offer-details-body">
+                            <div className="offer-content-wrapper">
+                              <div className="offer-info-main">
+                                <span className="offer-badge pulse">
+                                  {offer.discountType === 'percentage' ? `${offer.discount}% OFF` : `₹${offer.discount} OFF`}
+                                </span>
+                                <h3 className="offer-title">{offer.title}</h3>
+                                <p className="offer-desc">{offer.description}</p>
+                              </div>
+
+                              <div className="offer-info-meta">
+                                <div className="meta-grid">
+                                  <div className="meta-item">
+                                    <i className="meta-icon">⏱️</i>
+                                    <div className="meta-text">
+                                      <span className="meta-label">Valid Until</span>
+                                      <span className="meta-value">{new Date(offer.endDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                    </div>
+                                  </div>
+                                  
+                                  {offer.minOrderAmount > 0 && (
+                                    <div className="meta-item">
+                                      <i className="meta-icon">🛍️</i>
+                                      <div className="meta-text">
+                                        <span className="meta-label">Min. Order</span>
+                                        <span className="meta-value">₹{offer.minOrderAmount}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {offer.couponCode && (
+                                    <div className="meta-item coupon-item">
+                                      <i className="meta-icon">🎟️</i>
+                                      <div className="meta-text">
+                                        <span className="meta-label">Use Code</span>
+                                        <span className="meta-value coupon-highlight">{offer.couponCode}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <button 
+                                  className="btn btn-primary offer-shop-btn"
+                                  onClick={() => navigate('/products')}
+                                >
+                                  Claim Offer & Shop Now
+                                </button>
+                              </div>
+                            </div>
                           </CardBody>
                         </Card>
                       </div>
@@ -399,22 +435,40 @@ const UserHome = () => {
                 
                 return (
                   <Card key={productWithId.id} hover className="product-card">
-                    <div className="product-image">
+                    <div 
+                      className="product-image" 
+                      style={{ height: '180px', flexShrink: 0, padding: '10px', backgroundColor: '#fff', borderBottom: '1px solid #f1f5f9' }}
+                    >
                       {productWithId.image && productWithId.image.trim() !== '' ? (
                         <img 
-                          src={`http://localhost:5001${productWithId.image}`}
+                          src={productWithId.image}
                           alt={productWithId.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                           onError={(e) => {
-                            console.log('Image failed to load, using fallback:', productWithId.image);
-                            e.target.src = `https://images.unsplash.com/photo-${1504674900247 + Math.floor(Math.random() * 100)}-0877df9cc836?auto=format&fit=crop&w=300&q=60`;
+                            console.log('Image failed to load:', productWithId.image);
+                            e.target.style.display = 'none';
+                            if (e.target.nextSibling) {
+                              e.target.nextSibling.style.display = 'flex';
+                            }
                           }}
                         />
-                      ) : (
-                        <img 
-                          src={`https://images.unsplash.com/photo-${1504674900247 + Math.floor(Math.random() * 100)}-0877df9cc836?auto=format&fit=crop&w=300&q=60`}
-                          alt={productWithId.name}
-                        />
-                      )}
+                      ) : null}
+                      <div 
+                        className="product-no-image" 
+                        style={{
+                          display: productWithId.image && productWithId.image.trim() !== '' ? 'none' : 'flex',
+                          height: '100%',
+                          width: '100%',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#f3f4f6',
+                          color: '#6b7280',
+                          fontSize: '14px',
+                          fontWeight: '500'
+                        }}
+                      >
+                        No Image
+                      </div>
                     </div>
                     <CardBody>
                       <h3 className="heading-5">{productWithId.name}</h3>

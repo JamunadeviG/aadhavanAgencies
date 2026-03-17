@@ -8,6 +8,7 @@ import UserHome from './pages/UserHome.jsx';
 import AdminHome from './pages/AdminHome.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Products from './pages/Products.jsx';
+import UserProducts from './pages/UserProducts.jsx';
 import Offers from './pages/Offers.jsx';
 import AddOffer from './pages/AddOffer.jsx';
 import TrackOrders from './pages/TrackOrders.jsx';
@@ -111,7 +112,7 @@ function App() {
           path="/products"
           element={
             <ProtectedRoute allowedRoles={['user', 'admin']}>
-              <Products />
+              {getStoredUser()?.role === 'admin' ? <Products /> : <UserProducts />}
             </ProtectedRoute>
           }
         />

@@ -71,7 +71,7 @@ const AdminLayout = ({ active, title, children }) => {
       </header>
 
       <div className="container admin-wrap">
-        <main className="admin-main-full card">
+        <main className="admin-main-full">
           <div className="admin-main-full-head">
             <div>
               <div className="admin-main-kicker">Admin workspace</div>

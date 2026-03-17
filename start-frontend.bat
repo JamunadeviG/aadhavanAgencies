@@ -5,7 +5,6 @@ echo   Starting Frontend Server
 echo ========================================
 echo.
 
-cd client
 
 if not exist "node_modules" (
     echo Installing dependencies...

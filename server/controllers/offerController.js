@@ -108,6 +108,11 @@ const createOffer = async (req, res) => {
       }
     }
 
+    let imageUrl = '';
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+    }
+
     const offer = new Offer({
       title,
       description,
@@ -115,12 +120,13 @@ const createOffer = async (req, res) => {
       discountType: discountType || 'percentage',
       startDate: start,
       endDate: end,
-      applicableProducts: applicableProducts || [],
+      applicableProducts: applicableProducts ? (typeof applicableProducts === 'string' ? applicableProducts.split(',') : applicableProducts) : [],
       minOrderAmount: minOrderAmount || 0,
       maxDiscountAmount: maxDiscountAmount || null,
-      isActive: isActive !== undefined ? isActive : true,
+      isActive: isActive !== undefined ? isActive === 'true' || isActive === true : true,
       usageLimit: usageLimit || null,
-      couponCode: couponCode ? couponCode.toUpperCase() : null
+      couponCode: couponCode ? couponCode.toUpperCase() : null,
+      image: imageUrl
     });
 
     const savedOffer = await offer.save();
@@ -218,12 +224,16 @@ const updateOffer = async (req, res) => {
     if (discountType !== undefined) updateData.discountType = discountType;
     if (startDate !== undefined) updateData.startDate = new Date(startDate);
     if (endDate !== undefined) updateData.endDate = new Date(endDate);
-    if (applicableProducts !== undefined) updateData.applicableProducts = applicableProducts;
+    if (applicableProducts !== undefined) updateData.applicableProducts = (typeof applicableProducts === 'string' ? applicableProducts.split(',') : applicableProducts);
     if (minOrderAmount !== undefined) updateData.minOrderAmount = minOrderAmount;
     if (maxDiscountAmount !== undefined) updateData.maxDiscountAmount = maxDiscountAmount;
-    if (isActive !== undefined) updateData.isActive = isActive;
+    if (isActive !== undefined) updateData.isActive = isActive === 'true' || isActive === true;
     if (usageLimit !== undefined) updateData.usageLimit = usageLimit;
     if (couponCode !== undefined) updateData.couponCode = couponCode ? couponCode.toUpperCase() : null;
+
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+    }
 
     const updatedOffer = await Offer.findByIdAndUpdate(
       offerId,

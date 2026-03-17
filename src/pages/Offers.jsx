@@ -22,6 +22,8 @@ const Offers = () => {
   const [editingOffer, setEditingOffer] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   // Add error boundary state
   const [hasError, setHasError] = useState(false);
@@ -46,7 +48,8 @@ const Offers = () => {
   useEffect(() => {
     console.log('🔄 Offers component mounted');
     
-    if (!user || user.role !== 'admin') {
+    const currentUser = getStoredUser();
+    if (!currentUser || currentUser.role !== 'admin') {
       console.log('❌ User not authenticated or not admin, redirecting to login');
       navigate('/login');
       return;
@@ -54,28 +57,12 @@ const Offers = () => {
     
     console.log('✅ User authenticated as admin, loading data');
     loadData();
-  }, [user, navigate]);
+  }, [navigate]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError('');
-      
-      console.log('🔄 Loading offers data...');
-      
-      // First check if we can reach the API
-      try {
-        const response = await fetch('http://localhost:5003/api/health');
-        if (!response.ok) {
-          throw new Error('Server not responding correctly');
-        }
-        console.log('✅ Server is reachable');
-      } catch (serverError) {
-        console.error('❌ Server connection error:', serverError);
-        setError('Backend server is not running. Please start the server first.');
-        setLoading(false);
-        return;
-      }
       
       // Load offers and products in parallel
       const [offersResponse, productsResponse] = await Promise.all([
@@ -112,6 +99,20 @@ const Offers = () => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+      setError('');
+    }
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview('');
+  };
+
   const handleProductSelection = (e) => {
     const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
     setFormData(prev => ({
@@ -139,6 +140,8 @@ const Offers = () => {
     setShowForm(false);
     setError('');
     setSuccess('');
+    setSelectedImage(null);
+    setImagePreview('');
   };
 
   const handleSubmit = async (e) => {
@@ -178,10 +181,10 @@ const Offers = () => {
 
       let response;
       if (editingOffer) {
-        response = await updateOffer(editingOffer._id, offerData);
+        response = await updateOffer(editingOffer._id, offerData, selectedImage);
         setSuccess('Offer updated successfully!');
       } else {
-        response = await createOffer(offerData);
+        response = await createOffer(offerData, selectedImage);
         setSuccess('Offer created successfully!');
       }
 
@@ -213,6 +216,13 @@ const Offers = () => {
     setShowForm(true);
     setError('');
     setSuccess('');
+    setSelectedImage(null);
+    // If we want to show existing image preview:
+    if (offer.image) {
+      setImagePreview(offer.image);
+    } else {
+      setImagePreview('');
+    }
   };
 
   const handleDelete = async (offerId) => {
@@ -332,12 +342,24 @@ const Offers = () => {
               
               return (
                 <div key={offer._id} className={`offer-card ${isOfferActive(offer) ? 'active' : 'inactive'}`}>
-                  <div className="offer-header">
-                    <h3>{offer.title || 'Untitled Offer'}</h3>
-                    <div className="offer-status">
-                      <span className={`status-badge ${isOfferActive(offer) ? 'active' : 'inactive'}`}>
-                        {isOfferActive(offer) ? 'Active' : 'Inactive'}
-                      </span>
+                  <div className="offer-header" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    {offer.image && (
+                      <div className="offer-thumbnail" style={{ width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+                        <img 
+                          src={offer.image} 
+                          alt={offer.title} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ margin: '0 0 8px 0' }}>{offer.title || 'Untitled Offer'}</h3>
+                      <div className="offer-status">
+                        <span className={`status-badge ${isOfferActive(offer) ? 'active' : 'inactive'}`}>
+                          {isOfferActive(offer) ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 
@@ -458,6 +480,30 @@ const Offers = () => {
                     rows="3"
                     required
                   />
+                </div>
+                
+                <div className="form-group full-width">
+                  <label>Offer Image</label>
+                  <div className="image-upload-container">
+                    <input
+                      type="file"
+                      id="offerImage"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="image-input"
+                    />
+                    <label htmlFor="offerImage" className="image-upload-label">
+                      {selectedImage ? selectedImage.name : 'Choose image file...'}
+                    </label>
+                    {imagePreview && (
+                      <div className="image-preview-container">
+                        <img src={imagePreview} alt="Offer preview" className="image-preview" />
+                        <button type="button" onClick={clearImage} className="clear-image-btn">
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="form-group">

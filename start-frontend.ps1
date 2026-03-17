@@ -6,8 +6,6 @@ Write-Host "  Starting Frontend Server" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Navigate to client directory
-Set-Location -Path "client"
 
 # Check if node_modules exists
 if (-not (Test-Path "node_modules")) {

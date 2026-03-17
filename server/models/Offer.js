@@ -61,6 +61,10 @@ const offerSchema = new mongoose.Schema({
     uppercase: true,
     trim: true
   },
+  image: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now

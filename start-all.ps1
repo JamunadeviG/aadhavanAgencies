@@ -15,11 +15,11 @@ Start-Sleep -Seconds 3
 
 # Start frontend in a new window
 Write-Host "Starting frontend server in new window..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\client'; if (-not (Test-Path 'node_modules')) { npm install }; npm run dev"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot'; if (-not (Test-Path 'node_modules')) { npm install }; npm run dev"
 
 Write-Host ""
 Write-Host "✅ Both servers are starting!" -ForegroundColor Green
-Write-Host "Backend:  http://localhost:5000" -ForegroundColor Cyan
+Write-Host "Backend:  http://localhost:5003" -ForegroundColor Cyan
 Write-Host "Frontend: http://localhost:3000" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Two new windows will open - one for each server." -ForegroundColor Yellow

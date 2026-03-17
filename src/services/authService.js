@@ -7,7 +7,7 @@ export const register = async (userData) => {
     const response = await api.post('/auth/register', userData);
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Registration failed' };
+    throw error.response?.data || { message: error.message || 'Registration failed', status: error.response?.status };
   }
 };
 
@@ -26,7 +26,7 @@ export const login = async (credentials) => {
     
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Login failed' };
+    throw error.response?.data || { message: error.message || 'Login failed', status: error.response?.status };
   }
 };
 
@@ -38,7 +38,7 @@ export const fetchProfile = async () => {
     }
     return response.data.user;
   } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch profile' };
+    throw error.response?.data || { message: error.message || 'Failed to fetch profile', status: error.response?.status };
   }
 };
 

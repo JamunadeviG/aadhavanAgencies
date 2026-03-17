@@ -150,7 +150,8 @@ const Products = () => {
         <div className="form-modal">
           <div className="form-card">
             <div className="form-title">
-              {editingProduct ? 'Edit Product' : 'Add New Product'}
+              <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
+              <button onClick={resetForm} className="close-btn" type="button">&times;</button>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -168,14 +169,33 @@ const Products = () => {
                 </div>
                 <div className="form-group">
                   <label>Category *</label>
-                  <input
-                    type="text"
+                  <select
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
                     required
-                    placeholder="e.g., Grains"
-                  />
+                  >
+                    <option value="" disabled>Select a category</option>
+                    {/* Preserve existing legacy category during edit if not in standard list */}
+                    {formData.category && 
+                     ![
+                       'Grain & cereals', 'Pulses & Dals', 'Spices & Masalas', 
+                       'Edible Oils & Ghee', 'Snacks & Packaged Foods', 'Fresh produce', 
+                       'Dairy & Bakery', 'Personal Care', 'Household & Cleaning', 'Others'
+                     ].includes(formData.category) && (
+                      <option value={formData.category}>{formData.category}</option>
+                    )}
+                    <option value="Grain & cereals">Grain & cereals</option>
+                    <option value="Pulses & Dals">Pulses & Dals</option>
+                    <option value="Spices & Masalas">Spices & Masalas</option>
+                    <option value="Edible Oils & Ghee">Edible Oils & Ghee</option>
+                    <option value="Snacks & Packaged Foods">Snacks & Packaged Foods</option>
+                    <option value="Fresh produce">Fresh produce</option>
+                    <option value="Dairy & Bakery">Dairy & Bakery</option>
+                    <option value="Personal Care">Personal Care</option>
+                    <option value="Household & Cleaning">Household & Cleaning</option>
+                    <option value="Others">Others</option>
+                  </select>
                 </div>
               </div>
 
@@ -269,62 +289,51 @@ const Products = () => {
             </button>
           </div>
         ) : (
-          <div className="prod-table-wrap">
-            <table className="prod-table">
-              <thead>
-                <tr>
-                  <th>Image</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Unit</th>
-                  <th>Price</th>
-                  <th>Stock</th>
-                  <th style={{ width: 200 }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((product) => (
-                  <tr key={product._id}>
-                    <td>
-                      {product.image && product.image.trim() !== '' ? (
-                        <img 
-                          src={`http://localhost:5001${product.image}`} 
-                          alt={product.name}
-                          className="product-table-image"
-                          onError={(e) => {
-                            console.log('Product table image failed to load:', product.image);
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <div className="product-no-image" style={{display: product.image && product.image.trim() !== '' ? 'none' : 'flex'}}>
-                        No Image
-                      </div>
-                    </td>
-                    <td className="td-strong">{product.name}</td>
-                    <td>{product.category}</td>
-                    <td>{product.unit}</td>
-                    <td>₹{product.price.toFixed(2)}</td>
-                    <td>
-                      <span className={`stock-chip ${product.stock === 0 ? 'out' : ''}`}>
-                        {product.stock}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="row-actions">
-                        <button onClick={() => handleEdit(product)} className="btn">
-                          Edit
-                        </button>
-                        <button onClick={() => handleDelete(product._id)} className="btn btn-danger">
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="products-grid">
+            {products.map((product) => (
+              <div key={product._id} className="product-card">
+                <div className="product-image-container">
+                  {product.image && product.image.trim() !== '' ? (
+                    <img 
+                      src={product.image} 
+                      alt={product.name}
+                      className="product-image"
+                      onError={(e) => {
+                        console.log('Product image failed to load:', product.image);
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className="product-no-image" style={{display: product.image && product.image.trim() !== '' ? 'none' : 'flex'}}>
+                    No Image
+                  </div>
+                  <div className={`product-stock-badge ${product.stock === 0 ? 'out' : ''}`}>
+                    {product.stock} in stock
+                  </div>
+                </div>
+                
+                <div className="product-details">
+                  <div className="product-header">
+                    <h3 className="product-name">{product.name}</h3>
+                    <span className="product-price">₹{product.price.toFixed(2)} /{product.unit}</span>
+                  </div>
+                  
+                  <div className="product-category">
+                    {product.category}
+                  </div>
+                  
+                  <div className="product-actions-grid">
+                    <button onClick={() => handleEdit(product)} className="btn btn-secondary">
+                      Edit
+                    </button>
+                    <button onClick={() => handleDelete(product._id)} className="btn btn-danger">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

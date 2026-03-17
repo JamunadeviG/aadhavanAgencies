@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL for API requests
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -43,10 +43,19 @@ api.interceptors.response.use(
     } else if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
       error.message = 'Network error. Unable to connect to server. Please check if the backend server is running on port 5000.';
     } else if (error.response?.status === 401) {
-      // Token expired or invalid - clear storage and redirect to login
+      // Token expired or invalid - clear storage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      
+      // Only redirect if not already on the login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      } else if (error.response.data?.message) {
+        // preserve the message from the backend if available
+        error.message = error.response.data.message;
+      } else {
+        error.message = 'Invalid email or password. Please try again.';
+      }
     } else if (error.response?.status === 403) {
       error.message = 'Access denied. Admin privileges required.';
     } else if (error.response?.status === 500) {

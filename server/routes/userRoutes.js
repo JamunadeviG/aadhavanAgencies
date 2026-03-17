@@ -117,14 +117,19 @@ router.get('/', protect, adminOnly, async (req, res) => {
     // Format user data for frontend
     const formattedUsers = users.map(user => ({
       _id: user._id,
+      userId: user.userId || 'N/A',
       name: user.name,
       email: user.email,
       role: user.role === 'admin' ? 'Admin' : 'Customer',
       storeName: user.storeName || 'N/A',
       storeType: user.storeType || 'N/A',
+      gstNumber: user.gstNumber || 'N/A',
       contactNumber: user.contactNumber || 'N/A',
+      addressLine1: user.addressLine1 || 'N/A',
+      addressLine2: user.addressLine2 || 'N/A',
       city: user.city || 'N/A',
       state: user.state || 'N/A',
+      pincode: user.pincode || 'N/A',
       lastLogin: user.updatedAt ? new Date(user.updatedAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -133,6 +138,7 @@ router.get('/', protect, adminOnly, async (req, res) => {
         minute: '2-digit'
       }) : 'Never',
       createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
       status: 'Active' // All registered users are considered active
     }));
     
