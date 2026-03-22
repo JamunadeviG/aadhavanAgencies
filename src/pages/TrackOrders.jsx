@@ -56,18 +56,16 @@ const TrackOrders = () => {
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'pending':
-        return '#f59e0b';
+      case 'placed':
+        return '#007bff';
       case 'processing':
-        return '#3b82f6';
-      case 'packed':
-        return '#8b5cf6';
-      case 'dispatched':
-        return '#06b6d4';
-      case 'out for delivery':
-        return '#6366f1';
+        return '#ffc107';
+      case 'shipped':
+        return '#17a2b8';
       case 'delivered':
-        return '#10b981';
+        return '#28a745';
+      case 'cancelled':
+        return '#dc3545';
       default:
         return '#6b7280';
     }

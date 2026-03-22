@@ -49,9 +49,7 @@ export const EnhancedNavigation = ({
   const getNavigationItems = () => {
     const baseItems = [
       { label: 'Home', path: '/', active: location.pathname === '/' },
-      { label: 'Products', path: '/products', active: location.pathname === '/products' },
       { label: 'About', path: '/about', active: location.pathname === '/about' },
-      { label: 'Offers', path: '/offers', active: location.pathname === '/offers' },
       { label: 'Support', path: '/support', active: location.pathname === '/support' },
     ];
 
@@ -80,58 +78,53 @@ export const EnhancedNavigation = ({
 
   return (
     <div className="enhanced-navigation">
-      {/* Top Utility Bar */}
-      <div className="utility-bar">
-        <div className="container">
-          <div className="utility-content">
-            <div className="utility-left">
-              <select className="utility-select">
-                <option>ENG</option>
-                <option>TAM</option>
-              </select>
-              <select className="utility-select">
-                <option>INR</option>
-                <option>USD</option>
-              </select>
-            </div>
-            
-            <div className="utility-center">
-              <span className="utility-help">
-                Need help? <strong>+91 97909 48214</strong>
-              </span>
-            </div>
-
-            <div className="utility-right">
-              {user && (
-                <>
-                  <button className="utility-link" onClick={() => navigate('/edit-profile')}>
-                    My Account
-                  </button>
-                  <button className="utility-link" onClick={() => navigate(pageType === 'user' ? '/track-orders' : '/admin-track-orders')}>
-                    Track Order
-                  </button>
-                  <button className="utility-link">
-                    Favourites
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
+      {/* Thin Black Bar */}
+      <div className="thin-black-bar" style={{
+        backgroundColor: '#000000',
+        height: '3px',
+        width: '100%'
+      }}></div>
+      
       {/* Main Navigation Bar */}
       <div className="main-nav-bar">
         <div className="container">
           <div className="nav-content">
             {/* Logo Section */}
-            <div className="nav-brand">
-              <div className="brand-logo">
+            <div className="nav-brand" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              cursor: 'pointer'
+            }} onClick={() => safeNavigate('/')}>
+              <div className="brand-logo" style={{
+                width: '40px',
+                height: '40px',
+                backgroundColor: '#2d5016',
+                color: 'white',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                fontSize: '16px'
+              }}>
                 <span>AA</span>
               </div>
-              <div className="brand-info">
-                <h1 className="brand-name">AADHAVAN AGENCIES</h1>
-                <p className="brand-tagline">Fresh wholesale delivery</p>
+              <div className="brand-info" style={{
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <h1 className="brand-name" style={{
+                  margin: '0',
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#2d5016'
+                }}>AADHAVAN AGENCIES</h1>
+                <p className="brand-tagline" style={{
+                  margin: '0',
+                  fontSize: '12px',
+                  color: '#666'
+                }}>Fresh wholesale delivery</p>
               </div>
             </div>
 
@@ -235,9 +228,7 @@ export const EnhancedNavigation = ({
         <div className="category-nav">
           <div className="container">
             <div className="category-content">
-              <button className="category-btn">
-                Shop by Category
-              </button>
+              {/* Shop by Category button removed */}
               <nav className="category-links">
                 {navItems.map((item) => (
                   <button

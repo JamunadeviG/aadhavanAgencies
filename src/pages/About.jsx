@@ -1,26 +1,28 @@
 import { useNavigate } from 'react-router-dom';
-import ShopHeader from '../components/ShopHeader.jsx';
+import { PageWrapper, PageContent, Section, Card, CardBody, Grid, Flex } from '../components/Layout.jsx';
+import { CommonFooter } from '../components/CommonFooter.jsx';
+import { EnhancedNavigation } from '../components/EnhancedNavigation.jsx';
 import './About.css';
 
 const About = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="about-page">
-      <ShopHeader />
+    <PageWrapper className="about-page">
+      <EnhancedNavigation pageType="public" />
 
-      <main className="about-main">
-        <section className="about-hero">
-          <div className="container hero-grid card">
-            <div className="hero-copy">
-              <div className="pill">Since 1995</div>
-              <h1>About Aadhavan Agencies</h1>
-              <p>
+      <PageContent>
+        <Section className="about-hero">
+          <Card hover className="hero-card">
+            <CardBody className="text-center">
+              <div className="hero-badge">Since 1995</div>
+              <h1 className="heading-1">About Aadhavan Agencies</h1>
+              <p className="text-body">
                 We are a trusted wholesale grocery partner serving supermarkets, hotels, and Kirana stores across Tamil Nadu with fresh staples, vegetables, and essentials delivered within 24 hours.
               </p>
-            </div>
-          </div>
-        </section>
+            </CardBody>
+          </Card>
+        </Section>
 
         <section className="story-section">
           <div className="container story-grid">
@@ -68,52 +70,10 @@ const About = () => {
             </div>
           </div>
         </section>
-      </main>
-
-      <footer className="site-footer">
-        <div className="container footer-grid">
-          <div className="footer-brand">
-            <div className="footer-logo">AA</div>
-            <div>
-              <p className="footer-name">Aadhavan Agencies</p>
-              <p className="footer-tagline">Wholesale supply partner for modern retailers.</p>
-            </div>
-          </div>
-
-          <div className="footer-links">
-            <p className="footer-heading">Explore</p>
-            <button className="footer-link" onClick={() => navigate('/')}>Home</button>
-            <button className="footer-link" onClick={() => navigate('/products')}>Products</button>
-            <button className="footer-link" onClick={() => navigate('/about')}>About</button>
-            <button className="footer-link" onClick={() => navigate('/')}>Support</button>
-          </div>
-
-          <div className="footer-contact">
-            <p className="footer-heading">Get in touch</p>
-            <ul>
-              <li><strong>Customer Care:</strong> <span>+91 97909 48214</span></li>
-              <li><strong>Email:</strong> <span>support@aadhavanagencies.com</span></li>
-              <li><strong>HQ:</strong> <span>No. 35,Thalagiriyar Street, Thiruvannamalai, TamilNadu  – 606601 </span></li>
-            </ul>
-          </div>
-
-          <div className="footer-hours">
-            <p className="footer-heading">Office hours</p>
-            <p>Mon - Sat: 6:00 AM - 8:00 PM</p>
-            <p>Closed on public holidays.</p>
-            <button className="btn btn-primary" onClick={() => navigate('/login')}>
-              Partner Login
-            </button>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <div className="container footer-bottom-inner">
-            <span>© {new Date().getFullYear()} Aadhavan Agencies. All rights reserved.</span>
-            <span>GST: 33AABCU9603R1Z5 • CIN: U15400TZ2010PTC033500</span>
-          </div>
-        </div>
-      </footer>
-    </div>
+      </PageContent>
+      
+      <CommonFooter />
+    </PageWrapper>
   );
 };
 

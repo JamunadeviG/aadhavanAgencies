@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout.jsx';
-import { getAllOrders, updateOrderStatus } from '../services/orderService.js';
+import { getAllOrders, updateOrderStatusWithStock } from '../services/orderService.js';
 
 const AdminTrackOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -10,6 +10,48 @@ const AdminTrackOrders = () => {
 
   useEffect(() => {
     fetchOrders();
+    
+    // Listen for order cancellation events from UserTrackOrders
+    const handleOrderCancellation = (event) => {
+      console.log('📦 Admin received order cancellation event:', event.detail);
+      
+      // Update the specific order in local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => {
+          const orderId = event.detail.orderId;
+          const orderKey = order.orderId || order._id || order.id;
+          
+          if (orderKey === orderId) {
+            console.log('📦 Updating order status to cancelled:', orderKey);
+            return {
+              ...order,
+              status: 'cancelled',
+              cancelledAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return order;
+        })
+      );
+    };
+    
+    // Listen for admin notifications
+    const handleAdminNotification = (event) => {
+      console.log('📦 Admin received notification:', event.detail);
+      
+      // Refresh orders to get the latest status
+      fetchOrders();
+    };
+    
+    // Add event listeners
+    window.addEventListener('orderCancellation', handleOrderCancellation);
+    window.addEventListener('adminNotification', handleAdminNotification);
+    
+    // Cleanup event listeners on unmount
+    return () => {
+      window.removeEventListener('orderCancellation', handleOrderCancellation);
+      window.removeEventListener('adminNotification', handleAdminNotification);
+    };
   }, []);
 
   const fetchOrders = async () => {
@@ -61,22 +103,63 @@ const AdminTrackOrders = () => {
       console.log('📦 Order ID type:', typeof orderId);
       console.log('📦 Order ID length:', orderId?.length);
       
-      const response = await updateOrderStatus(orderId, newStatus);
+      // Find the current order to get previous status and details
+      const currentOrder = orders.find(order => (order.orderId || order._id) === orderId);
+      const previousStatus = currentOrder?.status;
+      
+      console.log('📦 Previous status:', previousStatus);
+      console.log('📦 Order details:', currentOrder);
+      
+      // Use the new stock-aware status update function
+      const response = await updateOrderStatusWithStock(orderId, newStatus, previousStatus, currentOrder);
       console.log('📦 Update response:', response);
       
-      // Update local state regardless of response format
+      // Update local state with stock processing info
       setOrders(orders.map(order => {
         const orderKey = order.orderId || order._id;
         if (orderKey === orderId) {
-          return { ...order, status: newStatus, updatedAt: new Date().toISOString() };
+          return { 
+            ...order, 
+            status: newStatus, 
+            updatedAt: new Date().toISOString(),
+            stockProcessed: response.stockUpdate?.success ? true : order.stockProcessed,
+            lastStockUpdate: response.stockUpdate ? new Date().toISOString() : order.lastStockUpdate
+          };
         }
         return order;
       }));
+      
+      // Show success message with stock update info
+      if (response.stockUpdate?.success) {
+        console.log('📦 Stock updated successfully:', response.stockUpdate.message);
+        console.log('📦 Stock updates performed:', response.stockUpdate.updates);
+        
+        // Show detailed stock reduction info
+        response.stockUpdate.updates?.forEach((update, index) => {
+          console.log(`📦 Item ${index + 1}: ${update.productName} - Quantity: ${update.quantity}`);
+        });
+        
+        // You could add a toast notification here
+        alert(`✅ Order status updated to ${newStatus}\n📦 Stock reduced for ${response.stockUpdate.updates?.length || 0} products`);
+      } else {
+        console.log('📦 Order status updated (no stock changes needed)');
+        alert(`✅ Order status updated to ${newStatus}`);
+      }
+      
       console.log('📦 Order status updated successfully');
     } catch (error) {
       console.error('📦 Error updating order status:', error);
       console.error('📦 Error response:', error.response);
-      setError('Failed to update order status. Please try again.');
+      
+      // Show more specific error messages
+      let errorMessage = 'Failed to update order status. Please try again.';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setUpdatingOrderId(null);
     }
@@ -84,14 +167,12 @@ const AdminTrackOrders = () => {
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'pending':
-        return '#ffc107'; // yellow
-      case 'confirmed':
-        return '#17a2b8'; // blue
+      case 'placed':
+        return '#007bff'; // blue
       case 'processing':
-        return '#6f42c1'; // purple
+        return '#ffc107'; // yellow
       case 'shipped':
-        return '#fd7e14'; // orange
+        return '#17a2b8'; // cyan
       case 'delivered':
         return '#28a745'; // green
       case 'cancelled':
@@ -204,30 +285,26 @@ const AdminTrackOrders = () => {
                     </div>
                   </td>
                   <td style={{ padding: '1rem', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
-                      <select
-                        value={order.status || 'pending'}
-                        onChange={(e) => handleStatusUpdate(order.orderId || order._id, e.target.value)}
-                        disabled={updatingOrderId === (order.orderId || order._id)}
-                        style={{
-                          padding: '0.5rem',
-                          borderRadius: '0.25rem',
-                          border: '1px solid #ddd',
-                          fontSize: '0.9rem',
-                          minWidth: '120px'
-                        }}
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                      {updatingOrderId === (order.orderId || order._id) && (
-                        <div style={{ color: '#007bff', fontSize: '0.8rem' }}>Updating...</div>
-                      )}
-                    </div>
+                    <select
+                      value={order.status}
+                      onChange={(e) => handleStatusUpdate(order.orderId || order._id, e.target.value)}
+                      style={{
+                        padding: '0.25rem 0.5rem',
+                        border: '1px solid #dee2e6',
+                        borderRadius: '0.25rem',
+                        fontSize: '0.875rem',
+                        minWidth: '120px'
+                      }}
+                    >
+                      <option value="placed">Placed</option>
+                      <option value="processing">Processing</option>
+                      <option value="shipped">Shipped</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                    {updatingOrderId === (order.orderId || order._id) && (
+                      <div style={{ color: '#007bff', fontSize: '0.8rem' }}>Updating...</div>
+                    )}
                   </td>
                 </tr>
               ))}

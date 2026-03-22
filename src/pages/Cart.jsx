@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStoredUser } from '../services/authService.js';
 import { createOrder } from '../services/orderService.js';
 import { getCart, addToCart, updateCartItem, removeFromCart, clearCart } from '../services/cartService.js';
 import { PageWrapper, PageContent, Card, CardBody, Grid, Flex, LoadingState } from '../components/Layout.jsx';
-import { ImageNavigation } from '../components/ImageNavigation.jsx';
+import UserNavbar from '../components/UserNavbar.jsx';
 import { CommonFooter } from '../components/CommonFooter.jsx';
 import './Cart.css';
 
@@ -577,7 +576,10 @@ const Cart = () => {
 
   // Render cart page
   return (
-    <div className="cart-page">
+    <PageWrapper>
+      <UserNavbar />
+      <PageContent>
+        <div className="cart-page">
       {/* Loading State */}
       {loading && (
         <div className="loading">Loading cart...</div>
@@ -1033,7 +1035,7 @@ const Cart = () => {
               <p><b>Total Amount:</b> ₹{orderDetails?.total || '100'}</p>
               <p><b>Delivery Date:</b> {orderDetails?.deliveryDate || '2026-02-19'}</p>
               <p><b>Delivery Time:</b> {orderDetails?.deliveryTime || '10:30'}</p>
-              <p><b>Status:</b> <span className="status-box">Pending</span></p>
+              <p><b>Status:</b> <span className="status-box">Placed</span></p>
               <p><b>Customer:</b> {orderDetails?.customerName || 'Harini'}</p>
               <p><b>Phone:</b> {orderDetails?.customerPhone || '08838593077'}</p>
               <p><b>Address:</b> {orderDetails?.deliveryAddress || ''}</p>
@@ -1055,6 +1057,8 @@ const Cart = () => {
         </div>
       )}
     </div>
+      </PageContent>
+    </PageWrapper>
   );
 };
 

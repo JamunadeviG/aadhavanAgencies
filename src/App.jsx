@@ -10,7 +10,6 @@ import Dashboard from './pages/Dashboard.jsx';
 import Products from './pages/Products.jsx';
 import UserProducts from './pages/UserProducts.jsx';
 import Offers from './pages/Offers.jsx';
-import AddOffer from './pages/AddOffer.jsx';
 import TrackOrders from './pages/TrackOrders.jsx';
 import AdminTrackOrders from './pages/AdminTrackOrders.jsx';
 import Users from './pages/Users.jsx';
@@ -45,6 +44,16 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['user']}>
               <UserHome />
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* User products page - protected route for logged-in users */}
+        <Route
+          path="/user-products"
+          element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <UserProducts />
             </ProtectedRoute>
           }
         />
@@ -112,7 +121,7 @@ function App() {
           path="/products"
           element={
             <ProtectedRoute allowedRoles={['user', 'admin']}>
-              {getStoredUser()?.role === 'admin' ? <Products /> : <UserProducts />}
+              <Products />
             </ProtectedRoute>
           }
         />

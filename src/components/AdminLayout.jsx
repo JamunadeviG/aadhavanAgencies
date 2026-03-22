@@ -9,22 +9,7 @@ const AdminLayout = ({ active, title, children }) => {
 
   const go = (path) => navigate(path);
 
-  const handleEdit = (offer) => {
-    navigate('/add-offer', { state: { editingOffer: offer } });
-  };
-
-  const handleDelete = (id) => {
-    const confirmed = window.confirm('Delete this offer?');
-    if (!confirmed) return;
-    const updated = deleteOffer(id);
-    setOffers(updated);
-    if (editingId === id) {
-      setEditingId(null);
-      setForm({ title: '', description: '', discount: '', validTill: '', productName: '' });
-    }
-    setToast('Offer removed');
-  };
-
+  
   const handleLogout = () => {
     logout();
     navigate('/login');

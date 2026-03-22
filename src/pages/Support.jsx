@@ -1,26 +1,28 @@
 import { useNavigate } from 'react-router-dom';
-import ShopHeader from '../components/ShopHeader.jsx';
+import { PageWrapper, PageContent, Section, Card, CardBody, Grid, Flex } from '../components/Layout.jsx';
+import { CommonFooter } from '../components/CommonFooter.jsx';
+import { EnhancedNavigation } from '../components/EnhancedNavigation.jsx';
 import './Support.css';
 
 const Support = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="support-page">
-      <ShopHeader />
+    <PageWrapper className="support-page">
+      <EnhancedNavigation pageType="public" />
 
-      <main className="support-main">
-        <section className="support-hero">
-          <div className="container hero-grid card">
-            <div className="hero-copy">
-              <div className="pill">We're here to help</div>
-              <h1>Support & Contact</h1>
-              <p>
+      <PageContent>
+        <Section className="support-hero">
+          <Card hover className="hero-card">
+            <CardBody className="text-center">
+              <div className="hero-badge">We're here to help</div>
+              <h1 className="heading-1">Support & Contact</h1>
+              <p className="text-body">
                 Reach out to us for orders, deliveries, returns, or any questions about our products and services.
               </p>
-            </div>
-          </div>
-        </section>
+            </CardBody>
+          </Card>
+        </Section>
 
         <section className="contact-section">
           <div className="container contact-grid">
@@ -86,52 +88,10 @@ const Support = () => {
             </div>
           </div>
         </section>
-      </main>
-
-      <footer className="site-footer">
-        <div className="container footer-grid">
-          <div className="footer-brand">
-            <div className="footer-logo">AA</div>
-            <div>
-              <p className="footer-name">Aadhavan Agencies</p>
-              <p className="footer-tagline">Wholesale supply partner for modern retailers.</p>
-            </div>
-          </div>
-
-          <div className="footer-links">
-            <p className="footer-heading">Explore</p>
-            <button className="footer-link" onClick={() => navigate('/')}>Home</button>
-            <button className="footer-link" onClick={() => navigate('/products')}>Products</button>
-            <button className="footer-link" onClick={() => navigate('/about')}>About</button>
-            <button className="footer-link" onClick={() => navigate('/offers')}>Offers</button>
-          </div>
-
-          <div className="footer-contact">
-            <p className="footer-heading">Get in touch</p>
-            <ul>
-              <li><strong>Customer Care:</strong> <span>+91 97909 48214</span></li>
-              <li><strong>Email:</strong> <span>support@aadhavanagencies.com</span></li>
-              <li><strong>HQ:</strong> <span>17/4 Sivanandha Colony, Coimbatore, TN 641012</span></li>
-            </ul>
-          </div>
-
-          <div className="footer-hours">
-            <p className="footer-heading">Office hours</p>
-            <p>Mon - Sat: 6:00 AM - 8:00 PM</p>
-            <p>Closed on public holidays.</p>
-            <button className="btn btn-primary" onClick={() => navigate('/login')}>
-              Partner Login
-            </button>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <div className="container footer-bottom-inner">
-            <span>© {new Date().getFullYear()} Aadhavan Agencies. All rights reserved.</span>
-            <span>GST: 33AABCU9603R1Z5 • CIN: U15400TZ2010PTC033500</span>
-          </div>
-        </div>
-      </footer>
-    </div>
+      </PageContent>
+      
+      <CommonFooter />
+    </PageWrapper>
   );
 };
 

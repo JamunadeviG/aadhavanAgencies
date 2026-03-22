@@ -6,101 +6,96 @@ import { PageFooter, Grid, Flex } from './Layout.jsx';
  * Standardized footer for all pages
  */
 export const CommonFooter = ({ 
-  showNewsletter = true,
-  showSocialLinks = true,
-  companyName = 'Aadhavan Agencies',
-  companyTagline = 'Your Trusted Partner Since 1995'
+  companyName = 'Aadhavan Agencies'
 }) => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <PageFooter>
-      <Grid cols={4} gap="8" className="footer-grid">
+    <PageFooter style={{
+      margin: '0',
+      padding: '40px 20px 20px',
+      backgroundColor: '#1a1a1a', // Dark background for white text
+      borderTop: '1px solid #333333',
+      textAlign: 'center'
+    }}>
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto'
+      }}>
         {/* Company Info */}
-        <div className="footer-brand">
-          <div className="footer-logo">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '15px',
+          marginBottom: '20px'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            backgroundColor: '#ffffff',
+            color: '#1a1a1a',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold',
+            fontSize: '16px'
+          }}>
             <span>AA</span>
           </div>
           <div>
-            <h3 className="footer-company-name">{companyName}</h3>
-            <p className="footer-company-tagline">{companyTagline}</p>
+            <h3 style={{
+              margin: '0',
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#ffffff'
+            }}>{companyName}</h3>
           </div>
         </div>
 
-        {/* Quick Links */}
-        <div className="footer-section">
-          <h4 className="footer-heading">Quick Links</h4>
-          <ul className="footer-links">
-            <li><button className="footer-link">Home</button></li>
-            <li><button className="footer-link">About Us</button></li>
-            <li><button className="footer-link">Products</button></li>
-            <li><button className="footer-link">Services</button></li>
-            <li><button className="footer-link">Contact</button></li>
-          </ul>
-        </div>
-
-        {/* Services */}
-        <div className="footer-section">
-          <h4 className="footer-heading">Services</h4>
-          <ul className="footer-links">
-            <li><button className="footer-link">Retail Distribution</button></li>
-            <li><button className="footer-link">Wholesale Supply</button></li>
-            <li><button className="footer-link">Logistics</button></li>
-            <li><button className="footer-link">Customer Support</button></li>
-          </ul>
-        </div>
-
-        {/* Contact & Newsletter */}
-        <div className="footer-section">
-          <h4 className="footer-heading">Contact Info</h4>
-          <div className="footer-contact">
-            <p><strong>Address:</strong> 123 Business Street, City, State 12345</p>
-            <p><strong>Phone:</strong> +91 98765 43210</p>
-            <p><strong>Email:</strong> info@aadhavanagencies.com</p>
-            
-            {showNewsletter && (
-              <div className="footer-newsletter">
-                <p className="newsletter-text">Subscribe to our newsletter</p>
-                <div className="newsletter-form">
-                  <input 
-                    type="email" 
-                    placeholder="Your email" 
-                    className="newsletter-input"
-                  />
-                  <button className="btn btn-primary btn-sm">Subscribe</button>
-                </div>
-              </div>
-            )}
+        {/* Contact Info */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '30px',
+          flexWrap: 'wrap',
+          marginBottom: '20px'
+        }}>
+          <div style={{
+            color: '#ffffff',
+            fontSize: '14px'
+          }}>
+            <strong>Phone:</strong> +91 97909 48214
+          </div>
+          <div style={{
+            color: '#ffffff',
+            fontSize: '14px'
+          }}>
+            <strong>Email:</strong> aadhavanagencies@gmail.com
+          </div>
+          <div style={{
+            color: '#ffffff',
+            fontSize: '14px'
+          }}>
+            <strong>Address:</strong> 17/4 Sivanandha Colony, Coimbatore, TamilNadu 641012
           </div>
         </div>
-      </Grid>
 
-      {/* Footer Bottom */}
-      <div className="footer-bottom">
-        <Flex justify="between" align="center">
-          <p className="copyright">
+        {/* Copyright */}
+        <div style={{
+          marginTop: '20px',
+          paddingTop: '20px',
+          borderTop: '1px solid #333333'
+        }}>
+          <p style={{
+            margin: '0',
+            color: '#ffffff',
+            fontSize: '12px'
+          }}>
             © {currentYear} {companyName}. All rights reserved.
           </p>
-          
-          {showSocialLinks && (
-            <div className="social-links">
-              <Flex gap="3" align="center">
-                <button className="social-link" aria-label="Facebook">
-                  <span>f</span>
-                </button>
-                <button className="social-link" aria-label="Twitter">
-                  <span>𝕏</span>
-                </button>
-                <button className="social-link" aria-label="LinkedIn">
-                  <span>in</span>
-                </button>
-                <button className="social-link" aria-label="Instagram">
-                  <span>📷</span>
-                </button>
-              </Flex>
-            </div>
-          )}
-        </Flex>
+        </div>
       </div>
     </PageFooter>
   );

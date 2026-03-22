@@ -51,14 +51,14 @@ body {
 /* Controls Section */
 .orders-controls {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding: 12px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .search-bar {
@@ -201,6 +201,32 @@ body {
   white-space: nowrap;
 }
 
+/* Order Status Colors */
+.status-badge.placed {
+  background-color: #007bff;
+}
+
+.status-badge.pending {
+  background-color: #6c757d;
+}
+
+.status-badge.processing {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.status-badge.shipped {
+  background-color: #17a2b8;
+}
+
+.status-badge.delivered {
+  background-color: #28a745;
+}
+
+.status-badge.cancelled {
+  background-color: #dc3545;
+}
+
 /* Order Actions */
 .order-actions {
   display: flex;
@@ -270,7 +296,205 @@ body {
   border-color: #c82333;
 }
 
-/* Modal Styles */
+.btn-disabled {
+  background-color: #6c757d;
+  color: white;
+  border-color: #6c757d;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-disabled:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+/* Order Status Info */
+.order-status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.cancellation-status {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cancellation-status.can-cancel {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.cancellation-status.cannot-cancel {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Cancel Modal Enhancements */
+.order-details-section,
+.order-items-section {
+  margin-bottom: 1.5rem;
+}
+
+.order-details-section h5,
+.order-items-section h5 {
+  margin: 0 0 0.75rem 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.5rem;
+}
+
+.order-summary {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-item.total {
+  background: #fff3cd;
+  margin: 0.5rem -1rem -1rem -1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0 0 6px 6px;
+  font-weight: 600;
+  color: #856404;
+}
+
+.items-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background: white;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.item-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.item-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.item-quantity {
+  background: #e9ecef;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.item-price {
+  font-weight: 600;
+  color: #28a745;
+  min-width: 60px;
+  text-align: right;
+}
+
+.no-items {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+.cancellation-implications {
+  display: flex;
+  gap: 1rem;
+  background: #fff3cd;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ffeaa7;
+  margin-top: 1rem;
+}
+
+.implication-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.implication-text h6 {
+  margin: 0 0 0.5rem 0;
+  color: #856404;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.implication-text ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #856404;
+  font-size: 13px;
+}
+
+.implication-text li {
+  margin-bottom: 0.25rem;
+}
+
+/* Modal responsiveness */
+@media (max-width: 768px) {
+  .cancellation-implications {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .implication-icon {
+    align-self: center;
+  }
+  
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .item-info {
+    width: 100%;
+  }
+  
+  .item-price {
+    align-self: flex-end;
+  }
+}
 .modal-overlay {
   position: fixed;
   top: 0;

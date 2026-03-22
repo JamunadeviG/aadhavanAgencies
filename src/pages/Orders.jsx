@@ -145,6 +145,8 @@ const Orders = () => {
       case 'delivered': return '#28a745';
       case 'processing': return '#ffc107';
       case 'shipped': return '#17a2b8';
+      case 'cancelled': return '#dc3545';
+      case 'placed': return '#007bff';
       default: return '#6c757d';
     }
   };

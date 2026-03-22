@@ -4,6 +4,7 @@ import { getDashboardData } from '../services/adminService.js';
 import { PageWrapper, PageContent, Section, Card, CardBody, Grid, Flex, LoadingState } from '../components/Layout.jsx';
 import { AdminNavigation } from '../components/AdminNavigation.jsx';
 import { CommonFooter } from '../components/CommonFooter.jsx';
+import StockMonitor from '../components/StockMonitor.jsx';
 import './AdminHome.css';
 
 const AdminHome = () => {
@@ -17,7 +18,7 @@ const AdminHome = () => {
     totalUsers: 0,
     recentOrders: 0,
     totalOrders: 0,
-    pendingOrders: 0,
+    placedOrders: 0,
     deliveredOrders: 0,
     totalRevenue: 0,
     totalProducts: 0,
@@ -41,7 +42,7 @@ const AdminHome = () => {
           totalUsers: data.users?.stats?.totalUsers || 0,
           recentOrders: data.orders?.stats?.recentOrders || 0,
           totalOrders: data.orders?.stats?.totalOrders || 0,
-          pendingOrders: data.orders?.stats?.pendingOrders || 0,
+          placedOrders: data.orders?.stats?.placedOrders || 0,
           deliveredOrders: data.orders?.stats?.deliveredOrders || 0,
           totalRevenue: data.orders?.stats?.totalRevenue || 0,
           totalProducts: data.products?.stats?.totalProducts || 0,
@@ -60,7 +61,7 @@ const AdminHome = () => {
           totalUsers: 0,
           recentOrders: 0,
           totalOrders: 0,
-          pendingOrders: 0,
+          placedOrders: 0,
           deliveredOrders: 0,
           totalRevenue: 0,
           totalProducts: 0,
@@ -126,9 +127,9 @@ const AdminHome = () => {
                 </Card>
                 <Card hover className="stat-card">
                   <CardBody className="text-center">
-                    <div className="stat-icon">⏳</div>
-                    <h3 className="heading-3">{stats.pendingOrders}</h3>
-                    <p className="text-small">Pending Orders</p>
+                    <div className="stat-icon">📝</div>
+                    <h3 className="heading-3">{stats.placedOrders}</h3>
+                    <p className="text-small">Placed Orders</p>
                   </CardBody>
                 </Card>
                 <Card hover className="stat-card">
@@ -165,6 +166,10 @@ const AdminHome = () => {
               </Grid>
             </>
           )}
+        </Section>
+
+        <Section spacing="large">
+          <StockMonitor />
         </Section>
 
         <Section spacing="large">

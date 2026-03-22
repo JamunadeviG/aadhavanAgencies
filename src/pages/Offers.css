@@ -5,6 +5,52 @@
   padding: 20px;
 }
 
+/* Multi-Select Dropdown Styles */
+.multi-select-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.product-multi-select {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 2px solid var(--border, #e9ecef);
+  border-radius: 12px;
+  font-size: 14px;
+  background: white;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.product-multi-select:focus {
+  outline: none;
+  border-color: var(--primary, #13432a);
+  box-shadow: 0 0 0 3px rgba(19, 83, 42, 0.1);
+}
+
+.product-multi-select option {
+  padding: 8px 12px;
+  margin: 2px 0;
+}
+
+.product-multi-select option:checked {
+  background-color: var(--primary, #13432a);
+  color: white;
+}
+
+.multi-select-hint {
+  font-size: 12px;
+  color: var(--muted, #6c757d);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
 /* AdminLayout Integration */
 .admin-main-full-body .offers-header {
   display: flex;

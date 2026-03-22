@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStoredUser, updateUserProfile } from '../services/authService.js';
+import { PageWrapper, PageContent } from '../components/Layout.jsx';
+import UserNavbar from '../components/UserNavbar.jsx';
 import './EditProfile.css';
 
 const EditProfile = () => {
@@ -25,9 +27,6 @@ const EditProfile = () => {
   const [formData, setFormData] = useState({
     name: userData.name || '',
     email: userData.email || '',
-    storeName: userData.storeName || '',
-    storeType: userData.storeType || 'Retail',
-    gstNumber: userData.gstNumber || '',
     contactNumber: userData.contactNumber || userData.phone || '',
     addressLine1: userData.addressLine1 || userData.address || '',
     addressLine2: userData.addressLine2 || '',
@@ -118,22 +117,15 @@ const EditProfile = () => {
   };
 
   return (
-    <div className="edit-profile-page">
+    <PageWrapper>
+      <UserNavbar />
+      <PageContent>
+        <div className="edit-profile-page">
       <div className="container">
         <div className="edit-profile-container">
           <div className="profile-header">
             <h2>Edit Profile</h2>
             <p>Update your personal and business information</p>
-          </div>
-
-          {/* Simple debug display */}
-          <div style={{background: '#fff3cd', border: '1px solid #ffeaa7', padding: '10px', marginBottom: '20px', borderRadius: '5px', fontSize: '12px'}}>
-            <strong>Current Form Values:</strong><br/>
-            Name: {formData.name || '(empty)'}<br/>
-            Email: {formData.email || '(empty)'}<br/>
-            Store: {formData.storeName || '(empty)'}<br/>
-            City: {formData.city || '(empty)'}<br/>
-            <small style={{color: '#666'}}>Check browser console (F12) for more details</small>
           </div>
 
           {message && (
@@ -177,49 +169,6 @@ const EditProfile = () => {
                   name="contactNumber"
                   value={formData.contactNumber}
                   onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h3>Store Information</h3>
-              <div className="form-group">
-                <label htmlFor="storeName">Store Name</label>
-                <input
-                  type="text"
-                  id="storeName"
-                  name="storeName"
-                  value={formData.storeName}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="storeType">Store Type</label>
-                <select
-                  id="storeType"
-                  name="storeType"
-                  value={formData.storeType}
-                  onChange={handleChange}
-                >
-                  <option value="Retail">Retail</option>
-                  <option value="Wholesale">Wholesale</option>
-                  <option value="Distributor">Distributor</option>
-                  <option value="Manufacturer">Manufacturer</option>
-                  <option value="Service Provider">Service Provider</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="gstNumber">GST Number</label>
-                <input
-                  type="text"
-                  id="gstNumber"
-                  name="gstNumber"
-                  value={formData.gstNumber}
-                  onChange={handleChange}
-                  placeholder="e.g., 27AAAPL1234C1ZV"
                 />
               </div>
             </div>
@@ -333,6 +282,8 @@ const EditProfile = () => {
         </div>
       </div>
     </div>
+      </PageContent>
+    </PageWrapper>
   );
 };
 

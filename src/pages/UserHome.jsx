@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStoredUser } from '../services/authService.js';
-import { getProducts } from '../services/productService.js';
 import { getActiveOffers } from '../services/offerService.js';
 import { addToCart, getCart } from '../services/cartService.js';
+import { getProducts } from '../services/productService.js';
 import { PageWrapper, PageContent, Card, CardBody, Grid, Flex, LoadingState } from '../components/Layout.jsx';
-import { ImageNavigation } from '../components/ImageNavigation.jsx';
+import UserNavbar from '../components/UserNavbar.jsx';
 import { CommonFooter } from '../components/CommonFooter.jsx';
 import './UserHome.css';
 
@@ -87,10 +87,13 @@ const UserHome = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [cartCount, setCartCount] = useState(0);
-  const [showCartNotification, setShowCartNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [imageZoom, setImageZoom] = useState(1);
+  const [showCartNotification, setShowCartNotification] = useState(false);
 
   useEffect(() => {
     // Load active offers for banner
@@ -173,6 +176,30 @@ const UserHome = () => {
     // Use the authService logout function which handles everything
     logout();
     setShowLogoutConfirm(false);
+  };
+
+  const handleProductImageClick = (product) => {
+    setSelectedProduct(product);
+    setImageZoom(1);
+    setShowProductModal(true);
+  };
+
+  const closeProductModal = () => {
+    setShowProductModal(false);
+    setSelectedProduct(null);
+    setImageZoom(1);
+  };
+
+  const handleZoomIn = () => {
+    setImageZoom(prev => Math.min(prev + 0.5, 3));
+  };
+
+  const handleZoomOut = () => {
+    setImageZoom(prev => Math.max(prev - 0.5, 0.5));
+  };
+
+  const handleZoomReset = () => {
+    setImageZoom(1);
   };
 
   const handleAddToCart = async (product) => {
@@ -291,7 +318,7 @@ const UserHome = () => {
 
   return (
     <PageWrapper>
-      <ImageNavigation user={user} />
+      <UserNavbar />
 
       <PageContent>
         {/* Offers Banner */}
@@ -377,7 +404,7 @@ const UserHome = () => {
 
                                 <button 
                                   className="btn btn-primary offer-shop-btn"
-                                  onClick={() => navigate('/products')}
+                                  onClick={() => navigate('/user-products')}
                                 >
                                   Claim Offer & Shop Now
                                 </button>
@@ -417,7 +444,7 @@ const UserHome = () => {
         <div className="dashboard-row">
           <div className="section-header">
             <h2 className="heading-2">Featured Products</h2>
-            <button className="btn btn-outline" onClick={() => navigate('/products')}>
+            <button className="btn btn-outline" onClick={() => navigate('/user-products')}>
               View All Products
             </button>
           </div>
@@ -426,7 +453,7 @@ const UserHome = () => {
             <LoadingState message="Loading products..." />
           ) : (
             <Grid cols={4} gap="6">
-              {products.slice(0, 8).map((product, index) => {
+              {products.slice(0, 4).map((product, index) => {
                 // Ensure each product has a unique ID
                 const productWithId = {
                   ...product,
@@ -436,8 +463,9 @@ const UserHome = () => {
                 return (
                   <Card key={productWithId.id} hover className="product-card">
                     <div 
-                      className="product-image" 
-                      style={{ height: '180px', flexShrink: 0, padding: '10px', backgroundColor: '#fff', borderBottom: '1px solid #f1f5f9' }}
+                      className="product-image clickable" 
+                      style={{ height: '180px', flexShrink: 0, padding: '10px', backgroundColor: '#fff', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
+                      onClick={() => handleProductImageClick(productWithId)}
                     >
                       {productWithId.image && productWithId.image.trim() !== '' ? (
                         <img 
@@ -512,6 +540,112 @@ const UserHome = () => {
           <div className="notification-content">
             <div className="notification-icon">✅</div>
             <p>{notificationMessage}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="modal-overlay" onClick={cancelLogout}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Confirm Logout</h3>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to logout from your account?</p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={cancelLogout}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={confirmLogout}>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product Image Modal */}
+      {showProductModal && selectedProduct && (
+        <div className="product-modal-overlay" onClick={closeProductModal}>
+          <div className="product-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{selectedProduct.name}</h3>
+              <button className="modal-close" onClick={closeProductModal}>×</button>
+            </div>
+            
+            <div className="modal-content">
+              <div className="modal-image-section">
+                <div className="zoom-controls">
+                  <button onClick={handleZoomOut} className="zoom-btn">−</button>
+                  <span className="zoom-level">{Math.round(imageZoom * 100)}%</span>
+                  <button onClick={handleZoomIn} className="zoom-btn">+</button>
+                  <button onClick={handleZoomReset} className="zoom-reset">Reset</button>
+                </div>
+                
+                <div className="image-container">
+                  {selectedProduct.image && selectedProduct.image.trim() !== '' ? (
+                    <img 
+                      src={selectedProduct.image}
+                      alt={selectedProduct.name}
+                      style={{ 
+                        transform: `scale(${imageZoom})`,
+                        maxWidth: '100%',
+                        maxHeight: '400px',
+                        objectFit: 'contain',
+                        transition: 'transform 0.3s ease'
+                      }}
+                    />
+                  ) : (
+                    <div className="no-image-placeholder">
+                      No Image Available
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="modal-details">
+                <div className="product-info">
+                  <h4>Product Details</h4>
+                  <div className="detail-row">
+                    <span className="detail-label">Price:</span>
+                    <span className="detail-value">₹{selectedProduct.price} / {selectedProduct.unit}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Stock:</span>
+                    <span className={`detail-value ${selectedProduct.stock > 0 ? 'in-stock' : 'out-of-stock'}`}>
+                      {selectedProduct.stock > 0 ? `${selectedProduct.stock} ${selectedProduct.unit} available` : 'Out of Stock'}
+                    </span>
+                  </div>
+                  {selectedProduct.category && (
+                    <div className="detail-row">
+                      <span className="detail-label">Category:</span>
+                      <span className="detail-value">{selectedProduct.category}</span>
+                    </div>
+                  )}
+                  {selectedProduct.description && (
+                    <div className="detail-row">
+                      <span className="detail-label">Description:</span>
+                      <span className="detail-value">{selectedProduct.description}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="modal-actions">
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => {
+                      handleAddToCart(selectedProduct);
+                      closeProductModal();
+                    }}
+                    disabled={selectedProduct.stock <= 0}
+                  >
+                    {selectedProduct.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

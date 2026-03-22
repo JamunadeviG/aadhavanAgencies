@@ -561,24 +561,30 @@ const Offers = () => {
                   />
                 </div>
                 
-                <div className="form-group">
-                  <label htmlFor="applicableProducts">Applicable Products</label>
-                  <select
-                    id="applicableProducts"
-                    name="applicableProducts"
-                    value={formData.applicableProducts}
-                    onChange={handleProductSelection}
-                    multiple
-                    size="4"
-                  >
-                    <option value="">Leave empty for all products</option>
-                    {products.map(product => (
-                      <option key={product._id} value={product._id}>
-                        {product.name} ({product.unit})
+                <div className="form-group full-width">
+                  <label htmlFor="applicableProducts">APPLICABLE PRODUCTS</label>
+                  <div className="multi-select-dropdown">
+                    <select
+                      id="applicableProducts"
+                      name="applicableProducts"
+                      value={formData.applicableProducts}
+                      onChange={handleProductSelection}
+                      multiple
+                      className="product-multi-select"
+                    >
+                      <option value="" disabled>
+                        Leave empty for all products
                       </option>
-                    ))}
-                  </select>
-                  <small>Hold Ctrl/Cmd to select multiple products</small>
+                      {products.map(product => (
+                        <option key={product._id} value={product._id}>
+                          {product.name} ({product.unit})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="multi-select-hint">
+                      Hold Ctrl/Cmd to select multiple products
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="form-group">

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStoredUser } from '../services/authService.js';
-import { getUserOrders } from '../services/orderService.js';
+import { getUserOrders, updateOrderStatusWithStock } from '../services/orderService.js';
 import { PageWrapper, PageContent } from '../components/Layout.jsx';
+import UserNavbar from '../components/UserNavbar.jsx';
 import './UserTrackOrders.css';
 
 const UserTrackOrders = () => {
@@ -44,57 +45,316 @@ const UserTrackOrders = () => {
       console.log('🔍 UserTrackOrders: API Response:', response);
       console.log('🔍 UserTrackOrders: Orders from API:', response.orders);
       
+      // Debug: Log each order's status
+      if (response.orders) {
+        response.orders.forEach((order, index) => {
+          console.log(`🔍 Order ${index}:`, {
+            id: order.id || order._id || order.orderId,
+            status: order.status,
+            customerName: order.customerName,
+            rawOrder: order
+          });
+        });
+      }
+      
       setOrders(response.orders || []);
       setLoading(false);
     } catch (error) {
-      console.error('🔍 UserTrackOrders: Error loading orders:', error);
-      setError(error.message || 'Failed to load your orders');
-      setOrders([]);
-      setLoading(false);
+      console.error('🔍 UserTrackOrders: Error loading orders from API:', error);
+      console.warn('🔍 UserTrackOrders: Backend not available, using localStorage fallback');
+      
+      // Fallback to localStorage when backend is not available
+      try {
+        const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        console.log('🔍 UserTrackOrders: Loaded orders from localStorage:', localOrders.length);
+        
+        // Filter orders for current user
+        const userOrders = localOrders.filter(order => 
+          order.userId === user.id || order.customerId === user.id || order.userEmail === user.email
+        );
+        
+        console.log('🔍 UserTrackOrders: Filtered orders for current user:', userOrders.length);
+        
+        // Debug: Log each order's status
+        if (userOrders) {
+          userOrders.forEach((order, index) => {
+            console.log(`🔍 [LOCAL] Order ${index}:`, {
+              id: order.id || order._id || order.orderId,
+              status: order.status,
+              customerName: order.customerName,
+              rawOrder: order
+            });
+          });
+        }
+        
+        setOrders(userOrders);
+        setLoading(false);
+        
+        if (userOrders.length === 0) {
+          console.log('🔍 UserTrackOrders: No orders found in localStorage, creating sample data');
+          // Create sample order data for testing
+          const sampleOrders = [
+            {
+              id: 'ORD-001',
+              orderId: 'ORD-001',
+              userId: user.id,
+              customerName: user.name || 'Test User',
+              customerPhone: '9876543210',
+              customerEmail: user.email || 'test@example.com',
+              status: 'placed',
+              orderDate: new Date().toISOString(),
+              deliveryDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              deliveryTime: '10:30 AM',
+              deliveryAddress: '123 Main St, Chennai, TamilNadu',
+              total: 750,
+              totalAmount: 750,
+              items: [
+                {
+                  name: 'Rice 5kg',
+                  productName: 'Rice 5kg',
+                  quantity: 2,
+                  price: 250,
+                  unitPrice: 250
+                },
+                {
+                  name: 'Sugar 1kg', 
+                  productName: 'Sugar 1kg',
+                  quantity: 3,
+                  price: 150,
+                  unitPrice: 50
+                },
+                {
+                  name: 'Oil 1L',
+                  productName: 'Oil 1L',
+                  quantity: 1,
+                  price: 120,
+                  unitPrice: 120
+                }
+              ]
+            },
+            {
+              id: 'ORD-002',
+              orderId: 'ORD-002',
+              userId: user.id,
+              customerName: user.name || 'Test User',
+              customerPhone: '9876543210',
+              customerEmail: user.email || 'test@example.com',
+              status: 'processing',
+              orderDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+              deliveryDate: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().split('T')[0],
+              deliveryTime: '2:00 PM',
+              deliveryAddress: '456 Oak Ave, Chennai, TamilNadu',
+              total: 520,
+              totalAmount: 520,
+              items: [
+                {
+                  name: 'Wheat Flour 2kg',
+                  productName: 'Wheat Flour 2kg',
+                  quantity: 1,
+                  price: 120,
+                  unitPrice: 120
+                },
+                {
+                  name: 'Dal 1kg',
+                  productName: 'Dal 1kg', 
+                  quantity: 4,
+                  price: 80,
+                  unitPrice: 20
+                }
+              ]
+            },
+            {
+              id: 'ORD-003',
+              orderId: 'ORD-003',
+              userId: user.id,
+              customerName: user.name || 'Test User',
+              customerPhone: '9876543210',
+              customerEmail: user.email || 'test@example.com',
+              status: 'shipped',
+              orderDate: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+              deliveryDate: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().split('T')[0],
+              deliveryTime: '11:00 AM',
+              deliveryAddress: '789 Pine St, Chennai, TamilNadu',
+              total: 380,
+              totalAmount: 380,
+              items: [
+                {
+                  name: 'Tea Powder 250g',
+                  productName: 'Tea Powder 250g',
+                  quantity: 2,
+                  price: 190,
+                  unitPrice: 95
+                }
+              ]
+            }
+          ];
+          
+          console.log('🔍 UserTrackOrders: Created sample orders for testing');
+          setOrders(sampleOrders);
+          setLoading(false);
+        }
+        
+      } catch (localError) {
+        console.error('🔍 UserTrackOrders: Error loading from localStorage:', localError);
+        setError('Failed to load orders. Please refresh the page.');
+        setOrders([]);
+        setLoading(false);
+      }
     }
   };
 
-  const handleUpdateOrderStatus = () => {
+  const handleUpdateOrderStatus = async () => {
     if (!selectedOrder || !updateStatus) {
       alert('Please select a status');
       return;
     }
 
     try {
-      // Update order in localStorage
-      const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      const updatedOrders = savedOrders.map(order => 
-        order.id === selectedOrder.id 
-          ? { ...order, status: updateStatus, updatedAt: new Date().toISOString() }
-          : order
-      );
+      setError('');
+      const orderId = selectedOrder.orderId || selectedOrder._id || selectedOrder.id;
+      const previousStatus = selectedOrder.status;
       
-      localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      console.log('📦 User updating order status:', orderId, 'to:', updateStatus);
+      console.log('📦 Previous status:', previousStatus);
       
-      // Update local state
-      setOrders(updatedOrders);
+      // Use the stock-aware status update function
+      const response = await updateOrderStatusWithStock(orderId, updateStatus, previousStatus, selectedOrder);
+      console.log('📦 Update response:', response);
+      
+      // Update local state with stock processing info
+      const updatedOrder = { 
+        ...selectedOrder, 
+        status: updateStatus, 
+        updatedAt: new Date().toISOString(),
+        stockProcessed: response.stockUpdate?.success ? true : selectedOrder.stockProcessed,
+        lastStockUpdate: response.stockUpdate ? new Date().toISOString() : selectedOrder.lastStockUpdate
+      };
+      
+      setOrders(orders.map(order => 
+        (order.orderId || order._id || order.id) === orderId ? updatedOrder : order
+      ));
       
       // Update selected order
-      setSelectedOrder({ ...selectedOrder, status: updateStatus, updatedAt: new Date().toISOString() });
+      setSelectedOrder(updatedOrder);
       
       // Close status update modal
       setShowStatusUpdate(false);
       setUpdateStatus('');
       
-      // Show success message
-      alert(`Order #${selectedOrder.id} status updated to ${updateStatus}`);
+      // Show success message with stock update info
+      let successMessage = `Order #${orderId} status updated to ${updateStatus}`;
+      if (response.stockUpdate?.success) {
+        successMessage += `. ${response.stockUpdate.message}`;
+      }
+      alert(successMessage);
       
-      // Create admin notification for status update
-      if (isAdmin) {
+    } catch (error) {
+      console.error('📦 Error updating order status:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update order status';
+      setError(errorMessage);
+      alert(`Error: ${errorMessage}`);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    console.log('📦 [DEBUG] handleCancelOrder called');
+    console.log('📦 [DEBUG] orderToCancel:', orderToCancel);
+    console.log('📦 [DEBUG] typeof orderToCancel:', typeof orderToCancel);
+    
+    if (!orderToCancel) {
+      console.error('🔍 [ERROR] No order to cancel - orderToCancel is undefined');
+      alert('Error: No order selected for cancellation. Please try again.');
+      return;
+    }
+    
+    // Additional validation
+    if (!orderToCancel.id && !orderToCancel._id && !orderToCancel.orderId) {
+      console.error('🔍 [ERROR] Order has no valid ID:', orderToCancel);
+      alert('Error: Invalid order data. Please refresh the page and try again.');
+      return;
+    }
+    
+    if (!orderToCancel.status) {
+      console.error('🔍 [ERROR] Order has no status:', orderToCancel);
+      alert('Error: Order status is missing. Please refresh the page and try again.');
+      return;
+    }
+    
+    console.log('📦 [DEBUG] All validations passed, proceeding with cancellation');
+
+    try {
+      setError('');
+      const orderId = orderToCancel.orderId || orderToCancel._id || orderToCancel.id;
+      const previousStatus = orderToCancel.status;
+      
+      console.log('📦 User cancelling order:', orderId);
+      console.log('📦 Previous status:', previousStatus);
+      console.log('📦 Order details:', orderToCancel);
+      
+      // Check if order can be cancelled before proceeding
+      const canCancel = canCancelOrder(orderToCancel);
+      console.log('📦 Can cancel this order:', canCancel);
+      
+      if (!canCancel) {
+        const status = (orderToCancel.status || '').toLowerCase().trim();
+        alert(`Cannot cancel order with status: "${status}". Orders can only be cancelled when status is "pending", "placed", or "processing".`);
+        return;
+      }
+      
+      console.log('📦 [DEBUG] About to call updateOrderStatusWithStock');
+      
+      // Try to use the stock-aware status update function first
+      try {
+        console.log('📦 Attempting to cancel order via API...');
+        const response = await updateOrderStatusWithStock(orderId, 'cancelled', previousStatus, orderToCancel);
+        console.log('📦 Cancel response (API):', response);
+        
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to cancel order');
+        }
+        
+        console.log('📦 [DEBUG] API call successful, updating local state');
+        
+        // Update local state with stock processing info
+        const updatedOrder = { 
+          ...orderToCancel, 
+          status: 'cancelled', 
+          cancelledAt: new Date().toISOString(),
+          stockProcessed: response.stockUpdate?.success ? true : orderToCancel.stockProcessed,
+          lastStockUpdate: response.stockUpdate ? new Date().toISOString() : orderToCancel.lastStockUpdate
+        };
+        
+        console.log('📦 Updating local state for order:', orderId);
+        console.log('📦 Updated order object:', updatedOrder);
+        
+        setOrders(prevOrders => {
+          const updatedOrders = prevOrders.map(order => {
+            const currentOrderId = order.id || order._id || order.orderId;
+            console.log(`📦 Checking order ${currentOrderId} against cancelled order ${orderId}`);
+            if (currentOrderId === orderId) {
+              console.log('📦 Found matching order, updating status to cancelled');
+              return updatedOrder;
+            }
+            return order;
+          });
+          
+          console.log('📦 Orders after update:', updatedOrders);
+          return updatedOrders;
+        });
+        
+        console.log('📦 [DEBUG] Local state updated successfully');
+        
+        // Create admin notification for order cancellation
         const adminNotification = {
           id: `NOTIF-${Date.now()}`,
-          type: 'order_status_update',
-          title: 'Order Status Updated',
-          message: `Order #${selectedOrder.id} status changed to ${updateStatus}`,
-          orderId: selectedOrder.id,
-          oldStatus: selectedOrder.status,
-          newStatus: updateStatus,
-          updatedBy: user?.name || 'Admin',
+          type: 'order_cancelled',
+          title: 'Order Cancelled',
+          message: `Order #${orderId} has been cancelled by customer`,
+          orderId: orderId,
+          customerName: orderToCancel.customerName,
+          customerPhone: orderToCancel.customerPhone,
+          total: orderToCancel.total,
+          cancelledBy: user?.name || 'Customer',
           status: 'unread',
           createdAt: new Date().toISOString()
         };
@@ -105,11 +365,113 @@ const UserTrackOrders = () => {
         
         // Trigger admin notification event
         window.dispatchEvent(new CustomEvent('adminNotification', { detail: adminNotification }));
+        
+        console.log('📦 [DEBUG] About to close modal and reset state');
+        
+        // Close modal and reset state
+        setShowCancelConfirm(false);
+        setOrderToCancel(null);
+        
+        // Show success message with stock restoration info
+        let successMessage = `✅ Order #${orderId} has been cancelled successfully!\n\n`;
+        successMessage += `📋 Order Details:\n`;
+        successMessage += `• Customer: ${orderToCancel.customerName}\n`;
+        successMessage += `• Total Amount: ₹${orderToCancel.total || orderToCancel.totalAmount || 0}\n`;
+        successMessage += `• Items: ${orderToCancel.items?.length || 0} items\n`;
+        successMessage += `• Status: Changed to "Cancelled"\n`;
+        
+        if (response.stockUpdate?.success) {
+          successMessage += `\n📦 Stock Management:\n`;
+          successMessage += `• ${response.stockUpdate.message}\n`;
+          if (response.stockUpdate.updates) {
+            successMessage += `• Stock restored for ${response.stockUpdate.updates.length} products\n`;
+          }
+        }
+        
+        successMessage += `\n📧 Admin has been notified about this cancellation.`;
+        
+        console.log('📦 [DEBUG] Showing success message');
+        alert(successMessage);
+        
+      } catch (apiError) {
+        console.warn('📦 Backend API not available, using localStorage fallback:', apiError.message);
+        
+        // Fallback to localStorage when backend is not available
+        console.log('📦 Using localStorage fallback for order cancellation');
+        
+        // Update order in localStorage
+        const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        console.log('📦 LocalStorage orders before update:', localOrders.length);
+        
+        const updatedLocalOrders = localOrders.map(order => {
+          const currentOrderId = order.id || order._id || order.orderId;
+          console.log(`📦 [LOCAL] Checking order ${currentOrderId} against cancelled order ${orderId}`);
+          
+          if (currentOrderId === orderId) {
+            console.log('📦 [LOCAL] Found matching order, updating status to cancelled');
+            return { ...order, status: 'cancelled', cancelledAt: new Date().toISOString() };
+          }
+          return order;
+        });
+        
+        localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
+        console.log('📦 [LOCAL] Updated orders in localStorage:', updatedLocalOrders.length);
+        
+        // Update local state
+        console.log('📦 [LOCAL] Updating React state with cancelled orders');
+        setOrders(updatedLocalOrders);
+        
+        // Create admin notification
+        const adminNotification = {
+          id: `NOTIF-${Date.now()}`,
+          type: 'order_cancelled',
+          title: 'Order Cancelled',
+          message: `Order #${orderId} has been cancelled by customer (Local Mode)`,
+          orderId: orderId,
+          customerName: orderToCancel.customerName,
+          customerPhone: orderToCancel.customerPhone,
+          total: orderToCancel.total,
+          cancelledBy: user?.name || 'Customer',
+          status: 'unread',
+          createdAt: new Date().toISOString()
+        };
+        
+        const existingNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+        existingNotifications.unshift(adminNotification);
+        localStorage.setItem('adminNotifications', JSON.stringify(existingNotifications));
+        
+        // Trigger admin notification event
+        window.dispatchEvent(new CustomEvent('adminNotification', { detail: adminNotification }));
+        
+        // Close modal and reset state
+        setShowCancelConfirm(false);
+        setOrderToCancel(null);
+        
+        // Show success message
+        let successMessage = `✅ Order #${orderId} has been cancelled successfully!\n\n`;
+        successMessage += `📋 Order Details:\n`;
+        successMessage += `• Customer: ${orderToCancel.customerName}\n`;
+        successMessage += `• Total Amount: ₹${orderToCancel.total || orderToCancel.totalAmount || 0}\n`;
+        successMessage += `• Items: ${orderToCancel.items?.length || 0} items\n`;
+        successMessage += `• Status: Changed to "Cancelled"\n`;
+        successMessage += `\n📦 Note: Running in offline mode - backend not available`;
+        successMessage += `\n📧 Admin has been notified about this cancellation.`;
+        
+        alert(successMessage);
+        
       }
       
     } catch (error) {
-      console.error('Error updating order status:', error);
-      alert('Failed to update order status. Please try again.');
+      console.error('📦 [ERROR] Error cancelling order:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to cancel order';
+      console.log('📦 [ERROR] Error details:', {
+        message: errorMessage,
+        stack: error.stack,
+        response: error.response?.data
+      });
+      
+      setError(errorMessage);
+      alert(`Error: ${errorMessage}\n\nPlease check the console (F12) for more details.`);
     }
   };
 
@@ -119,59 +481,8 @@ const UserTrackOrders = () => {
     setShowStatusUpdate(true);
   };
 
-  const handleCancelOrder = () => {
-    if (!orderToCancel) return;
-
-    try {
-      // Update order status to cancelled
-      const savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      const updatedOrders = savedOrders.map(order => 
-        order.id === orderToCancel.id 
-          ? { ...order, status: 'cancelled', cancelledAt: new Date().toISOString() }
-          : order
-      );
-      
-      localStorage.setItem('orders', JSON.stringify(updatedOrders));
-      
-      // Update local state
-      setOrders(updatedOrders);
-      
-      // Create admin notification for order cancellation
-      const adminNotification = {
-        id: `NOTIF-${Date.now()}`,
-        type: 'order_cancelled',
-        title: 'Order Cancelled',
-        message: `Order #${orderToCancel.id} has been cancelled`,
-        orderId: orderToCancel.id,
-        customerName: orderToCancel.customerName,
-        customerPhone: orderToCancel.customerPhone,
-        total: orderToCancel.total,
-        cancelledBy: user?.name || 'Customer',
-        status: 'unread',
-        createdAt: new Date().toISOString()
-      };
-      
-      const existingNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
-      existingNotifications.unshift(adminNotification);
-      localStorage.setItem('adminNotifications', JSON.stringify(existingNotifications));
-      
-      // Trigger admin notification event
-      window.dispatchEvent(new CustomEvent('adminNotification', { detail: adminNotification }));
-      
-      // Close modal and reset state
-      setShowCancelConfirm(false);
-      setOrderToCancel(null);
-      
-      // Show success message
-      alert(`Order #${orderToCancel.id} has been cancelled successfully`);
-      
-    } catch (error) {
-      console.error('Error cancelling order:', error);
-      alert('Failed to cancel order. Please try again.');
-    }
-  };
-
   const openCancelConfirm = (order) => {
+    console.log('📦 Opening cancel confirmation for order:', order);
     setOrderToCancel(order);
     setShowCancelConfirm(true);
   };
@@ -182,7 +493,55 @@ const UserTrackOrders = () => {
   };
 
   const canEditOrCancel = (order) => {
-    return order.status !== 'shipped' && order.status !== 'delivered' && order.status !== 'cancelled';
+    // Allow edit/cancel only for 'placed' and 'processing' statuses
+    return order.status === 'placed' || order.status === 'processing';
+  };
+
+  const canCancelOrder = (order) => {
+    // Specific function for cancellation - pending, placed and processing
+    const status = (order.status || '').toLowerCase().trim();
+    const orderId = order.id || order._id || order.orderId;
+    
+    console.log(`🔍 [DEBUG] Checking cancellation for order ${orderId}:`);
+    console.log(`🔍 [DEBUG] - Raw status: "${order.status}"`);
+    console.log(`🔍 [DEBUG] - Normalized status: "${status}"`);
+    console.log(`🔍 [DEBUG] - Order object:`, order);
+    
+    const canCancel = status === 'pending' || status === 'placed' || status === 'processing';
+    console.log(`🔍 [DEBUG] - Can cancel: ${canCancel}`);
+    console.log(`🔍 [DEBUG] - Status check: "${status}" === "pending" = ${status === 'pending'}`);
+    console.log(`🔍 [DEBUG] - Status check: "${status}" === "placed" = ${status === 'placed'}`);
+    console.log(`🔍 [DEBUG] - Status check: "${status}" === "processing" = ${status === 'processing'}`);
+    
+    return canCancel;
+  };
+
+  const getNormalizedStatus = (order) => {
+    // Normalize status to handle various formats
+    let status = order.status || 'placed'; // Default to 'placed' if no status
+    
+    // Handle various status formats
+    if (typeof status === 'string') {
+      status = status.toLowerCase().trim();
+      
+      // Map common variations to standard statuses
+      const statusMap = {
+        'confirmed': 'processing',
+        'preparing': 'processing',
+        'ready': 'shipped',
+        'on the way': 'shipped',
+        'out for delivery': 'shipped',
+        'complete': 'delivered',
+        'finished': 'delivered'
+      };
+      
+      if (statusMap[status]) {
+        status = statusMap[status];
+      }
+    }
+    
+    console.log(`🔍 Normalized status for order ${order.id || order._id}: "${order.status}" → "${status}"`);
+    return status;
   };
 
   const getStatusColor = (status) => {
@@ -191,7 +550,7 @@ const UserTrackOrders = () => {
       case 'processing': return '#ffc107';
       case 'shipped': return '#17a2b8';
       case 'cancelled': return '#dc3545';
-      case 'pending': return '#6c757d';
+      case 'placed': return '#007bff';
       default: return '#6c757d';
     }
   };
@@ -202,7 +561,8 @@ const UserTrackOrders = () => {
       case 'processing': return '⏳';
       case 'shipped': return '🚚';
       case 'cancelled': return '❌';
-      case 'pending': return '⏸';
+      case 'placed': return '📝';
+      case 'pending': return '⏳';
       default: return '📦';
     }
   };
@@ -213,17 +573,28 @@ const UserTrackOrders = () => {
       case 'processing': return 'Processing';
       case 'shipped': return 'Shipped';
       case 'cancelled': return 'Cancelled';
+      case 'placed': return 'Placed';
       case 'pending': return 'Pending';
       default: return status || 'Unknown';
     }
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
+    const normalizedStatus = getNormalizedStatus(order);
+    const matchesStatus = filterStatus === 'all' || normalizedStatus === filterStatus;
     const matchesSearch = searchQuery === '' || 
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerPhone.includes(searchQuery);
+      (order.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.customerName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.customerPhone || '').includes(searchQuery);
+    
+    console.log(`🔍 [FILTER] Order ${order.id || order._id || order.orderId}:`);
+    console.log(`🔍 [FILTER]   - Normalized Status: "${normalizedStatus}"`);
+    console.log(`🔍 [FILTER]   - Filter Status: "${filterStatus}"`);
+    console.log(`🔍 [FILTER]   - Matches Status: ${matchesStatus}`);
+    console.log(`🔍 [FILTER]   - Search Query: "${searchQuery}"`);
+    console.log(`🔍 [FILTER]   - Matches Search: ${matchesSearch}`);
+    console.log(`🔍 [FILTER]   - Final Include: ${matchesStatus && matchesSearch}`);
+    
     return matchesStatus && matchesSearch;
   });
 
@@ -270,7 +641,10 @@ const UserTrackOrders = () => {
   }
 
   return (
-    <div className="user-track-orders">
+    <PageWrapper>
+      <UserNavbar />
+      <PageContent>
+        <div className="user-track-orders">
       <div className="container">
         <div className="track-orders-header">
           <h1>Track Your Orders</h1>
@@ -295,12 +669,37 @@ const UserTrackOrders = () => {
             >
               <option value="all">All Orders</option>
               <option value="pending">Pending</option>
+              <option value="placed">Placed</option>
               <option value="processing">Processing</option>
               <option value="shipped">Shipped</option>
               <option value="delivered">Delivered</option>
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
+          <button 
+            className="btn btn-outline"
+            onClick={() => {
+              console.log('🔍 [DEBUG] Current Orders Analysis:');
+              console.log('🔍 [DEBUG] Total orders:', orders.length);
+              
+              orders.forEach((order, index) => {
+                const status = (order.status || '').toLowerCase().trim();
+                const canCancel = status === 'pending' || status === 'placed' || status === 'processing';
+                const orderId = order.id || order._id || order.orderId || 'NO_ID';
+                
+                console.log(`🔍 [DEBUG] Order ${index}:`);
+                console.log(`🔍 [DEBUG]   - ID: ${orderId}`);
+                console.log(`🔍 [DEBUG]   - Status: "${order.status}"`);
+                console.log(`🔍 [DEBUG]   - Normalized: "${status}"`);
+                console.log(`🔍 [DEBUG]   - Can Cancel: ${canCancel}`);
+                console.log(`🔍 [DEBUG]   - Should show cancel button: ${canCancel}`);
+              });
+              
+              alert(`Debug: Check console (F12) for detailed order analysis.\n\nTotal Orders: ${orders.length}\n\nLook for "Should show cancel button: true" messages.`);
+            }}
+          >
+            🔍 Debug Cancellation
+          </button>
         </div>
 
         {filteredOrders.length === 0 ? (
@@ -326,22 +725,36 @@ const UserTrackOrders = () => {
               <p>Showing {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}</p>
             </div>
             
-            {filteredOrders.map((order) => (
-              <div key={order.id} className="order-card">
+            {filteredOrders.map((order) => {
+              const normalizedStatus = getNormalizedStatus(order);
+              const canCancel = canCancelOrder(order);
+              const orderId = order.id || order._id || order.orderId;
+              
+              console.log(`🔍 [RENDER] Order ${orderId}:`);
+              console.log(`🔍 [RENDER] - Raw status: "${order.status}"`);
+              console.log(`🔍 [RENDER] - Normalized status: "${normalizedStatus}"`);
+              console.log(`🔍 [RENDER] - Can cancel: ${canCancel}`);
+              console.log(`🔍 [RENDER] - Show cancel button: ${canCancel}`);
+              console.log(`🔍 [RENDER] - Show disabled button: ${!canCancel && normalizedStatus !== 'delivered' && normalizedStatus !== 'cancelled'}`);
+              
+              return (
+              <div key={orderId} className="order-card">
                 <div className="order-header">
                   <div className="order-info">
-                    <h3>Order #{order.id}</h3>
+                    <h3>Order #{orderId}</h3>
                     <p className="order-date">
                       Placed on {formatDate(order.orderDate)} at {formatTime(order.orderDate)}
                     </p>
                   </div>
-                  <div className="order-status">
-                    <span 
-                      className="status-badge"
-                      style={{ backgroundColor: getStatusColor(order.status) }}
-                    >
-                      {getStatusIcon(order.status)} {getStatusText(order.status)}
+                  <div className="order-status-info">
+                    <span className={`status-badge ${normalizedStatus}`}>
+                      {getStatusIcon(normalizedStatus)} {getStatusText(normalizedStatus)}
                     </span>
+                    {normalizedStatus !== 'cancelled' && normalizedStatus !== 'delivered' && (
+                      <span className={`cancellation-status ${canCancel ? 'can-cancel' : 'cannot-cancel'}`}>
+                        {canCancel ? '📝 Can be cancelled' : '🚫 Cannot be cancelled'}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -354,12 +767,21 @@ const UserTrackOrders = () => {
                       Edit
                     </button>
                   )}
-                  {canEditOrCancel(order) && (
+                  {canCancelOrder(order) && (
                     <button 
                       className="btn btn-danger"
                       onClick={() => openCancelConfirm(order)}
                     >
                       Cancel Order
+                    </button>
+                  )}
+                  {!canCancelOrder(order) && normalizedStatus !== 'delivered' && normalizedStatus !== 'cancelled' && (
+                    <button 
+                      className="btn btn-disabled"
+                      disabled
+                      title="Order cannot be cancelled once shipped"
+                    >
+                      Cannot Cancel
                     </button>
                   )}
                   <button 
@@ -370,7 +792,8 @@ const UserTrackOrders = () => {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -393,31 +816,74 @@ const UserTrackOrders = () => {
                 <div className="warning-icon">⚠️</div>
                 <div className="warning-message">
                   <h4>Are you sure you want to cancel this order?</h4>
-                  <p>Order #{orderToCancel.id}</p>
-                  <p>This action cannot be undone.</p>
+                  <p><strong>Order #{orderToCancel.id || orderToCancel.orderId || orderToCancel._id}</strong></p>
+                  <p>This action cannot be undone and your order will be permanently cancelled.</p>
                 </div>
               </div>
               
-              <div className="order-summary">
-                <div className="summary-item">
-                  <span>Customer:</span>
-                  <span>{orderToCancel.customerName}</span>
+              <div className="order-details-section">
+                <h5>Order Details</h5>
+                <div className="order-summary">
+                  <div className="summary-item">
+                    <span>Customer Name:</span>
+                    <span>{orderToCancel.customerName || 'N/A'}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span>Phone Number:</span>
+                    <span>{orderToCancel.customerPhone || 'N/A'}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span>Email:</span>
+                    <span>{orderToCancel.customerEmail || 'N/A'}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span>Order Date:</span>
+                    <span>{formatDate(orderToCancel.orderDate || orderToCancel.createdAt || orderToCancel.date)}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span>Delivery Date:</span>
+                    <span>{formatDate(orderToCancel.deliveryDate)} at {orderToCancel.deliveryTime || 'N/A'}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span>Delivery Address:</span>
+                    <span>{orderToCancel.deliveryAddress || orderToCancel.address || 'N/A'}</span>
+                  </div>
+                  <div className="summary-item total">
+                    <span>Total Amount:</span>
+                    <span><strong>₹{orderToCancel.total || orderToCancel.totalAmount || orderToCancel.amount || 0}</strong></span>
+                  </div>
                 </div>
-                <div className="summary-item">
-                  <span>Phone:</span>
-                  <span>{orderToCancel.customerPhone}</span>
+              </div>
+
+              <div className="order-items-section">
+                <h5>Order Items ({orderToCancel.items?.length || 0} items)</h5>
+                <div className="items-list">
+                  {orderToCancel.items && orderToCancel.items.length > 0 ? (
+                    orderToCancel.items.map((item, index) => (
+                      <div key={index} className="order-item">
+                        <div className="item-info">
+                          <span className="item-name">{item.name || item.productName || 'Unknown Product'}</span>
+                          <span className="item-quantity">× {item.quantity || 1}</span>
+                        </div>
+                        <span className="item-price">₹{item.price || item.unitPrice || 0}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="no-items">No items found in this order</p>
+                  )}
                 </div>
-                <div className="summary-item">
-                  <span>Total:</span>
-                  <span>₹{orderToCancel.total}</span>
-                </div>
-                <div className="summary-item">
-                  <span>Delivery:</span>
-                  <span>{formatDate(orderToCancel.deliveryDate)} at {orderToCancel.deliveryTime}</span>
-                </div>
-                <div className="summary-item">
-                  <span>Items:</span>
-                  <span>{orderToCancel.items?.length || 0} items</span>
+              </div>
+
+              <div className="cancellation-implications">
+                <div className="implication-icon">📝</div>
+                <div className="implication-text">
+                  <h6>What happens when you cancel:</h6>
+                  <ul>
+                    <li>Order status will be changed to "Cancelled"</li>
+                    <li>Any deducted stock will be restored (if applicable)</li>
+                    <li>You will need to place a new order if you change your mind</li>
+                    <li>Admin will be notified about this cancellation</li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -430,7 +896,12 @@ const UserTrackOrders = () => {
               </button>
               <button 
                 className="btn btn-danger"
-                onClick={handleCancelOrder}
+                onClick={() => {
+                  console.log('📦 [DEBUG] Cancel Order button clicked');
+                  console.log('📦 [DEBUG] orderToCancel:', orderToCancel);
+                  console.log('📦 [DEBUG] handleCancelOrder function:', typeof handleCancelOrder);
+                  handleCancelOrder();
+                }}
               >
                 Cancel Order
               </button>
@@ -477,7 +948,7 @@ const UserTrackOrders = () => {
                     className="status-select"
                   >
                     <option value="">Select new status</option>
-                    <option value="pending">⏸ Pending</option>
+                    <option value="placed">📝 Placed</option>
                     <option value="processing">⏳ Processing</option>
                     <option value="shipped">🚚 Shipped</option>
                     <option value="delivered">✅ Delivered</option>
@@ -646,6 +1117,8 @@ const UserTrackOrders = () => {
         </div>
       )}
     </div>
+      </PageContent>
+    </PageWrapper>
   );
 };
 
