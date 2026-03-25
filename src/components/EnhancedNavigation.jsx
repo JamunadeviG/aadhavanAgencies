@@ -148,7 +148,7 @@ export const EnhancedNavigation = ({
 
             {/* Delivery Info */}
             <div className="nav-delivery">
-              <span className="delivery-text">24H Delivery Across TN districts</span>
+              <span className="delivery-text">24H Delivery Across TVM district</span>
             </div>
 
             {/* User Actions */}

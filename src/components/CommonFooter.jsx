@@ -78,7 +78,7 @@ export const CommonFooter = ({
             color: '#ffffff',
             fontSize: '14px'
           }}>
-            <strong>Address:</strong> 17/4 Sivanandha Colony, Coimbatore, TamilNadu 641012
+            <strong>Address:</strong> No. 35,Thalagiriyar Street, Thiruvannamalai, TamilNadu  – 606601 
           </div>
         </div>
 
