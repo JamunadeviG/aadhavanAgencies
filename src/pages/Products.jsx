@@ -1,23 +1,151 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/productService.js';
 import AdminLayout from '../components/AdminLayout.jsx';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  rectSortingStrategy
+} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { getImageUrl } from '../utils/imageUtils.js';
 import './Products.css';
+
+// Separate Sortable Product Card Component
+const SortableProductItem = ({ product, id, isSelected, onToggleSelect, onInlineEdit, onDelete }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={"prod-card-wrapper " + (isSelected ? 'selected' : '')}>
+      <div className="drag-handle" {...attributes} {...listeners}>
+        <span>⋮⋮</span>
+      </div>
+      <div className="select-checkbox-zone">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onToggleSelect(product._id)}
+          className="prod-checkbox"
+        />
+      </div>
+      <div className="prod-data-display">
+        <div className="prod-thumb">
+          {product.image ? (
+            <img src={getImageUrl(product.image)} alt={product.name} onError={(e) => { e.target.style.display = 'none' }} />
+          ) : (
+            <div className="no-thumb">N/A</div>
+          )}
+        </div>
+        <div className="prod-meta">
+          <h4>{product.name}</h4>
+          <span className="prod-category">{product.category}</span>
+        </div>
+        <div className="prod-price-stock">
+          <div className="p-price">₹{product.price} /{product.unit}</div>
+          <div className={"p-stock " + (product.stock > 0 ? 'in' : 'out')}>
+            {product.stock} left
+          </div>
+        </div>
+        <div className="prod-row-actions">
+          <button onClick={() => onInlineEdit(product)} className="action-btn edit">Edit</button>
+          <button onClick={() => onDelete(product._id)} className="action-btn delete">🗑️</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Inline Edit Form Component
+const InlineEditForm = ({ product, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    name: product?.name || '',
+    category: product?.category || 'Others',
+    unit: product?.unit || '',
+    price: product?.price || '',
+    stock: product?.stock || ''
+  });
+
+  const [imageFile, setImageFile] = useState(null);
+
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await onSave(product?._id, formData, imageFile);
+  };
+
+  return (
+    <div className="inline-edit-expansion slide-down">
+      <form onSubmit={handleSubmit} className="inline-form">
+        <div className="inline-grid">
+          <div className="inp-group">
+            <label>Name</label>
+            <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+          </div>
+          <div className="inp-group">
+            <label>Category</label>
+            <select name="category" value={formData.category} onChange={handleChange}>
+              <option value="Grain & cereals">Grain & cereals</option>
+              <option value="Pulses & Dals">Pulses & Dals</option>
+              <option value="Spices & Masalas">Spices & Masalas</option>
+              <option value="Edible Oils & Ghee">Edible Oils & Ghee</option>
+              <option value="Snacks & Packaged Foods">Snacks & Packaged Foods</option>
+            </select>
+          </div>
+          <div className="inp-group">
+            <label>Unit</label>
+            <input type="text" name="unit" value={formData.unit} onChange={handleChange} required />
+          </div>
+          <div className="inp-group">
+            <label>Price</label>
+            <input type="number" name="price" value={formData.price} onChange={handleChange} required />
+          </div>
+          <div className="inp-group">
+            <label>Stock</label>
+            <input type="number" name="stock" value={formData.stock} onChange={handleChange} required />
+          </div>
+          <div className="inp-group">
+            <label>Replace Image (opt)</label>
+            <input type="file" onChange={(e) => setImageFile(e.target.files[0])} />
+          </div>
+        </div>
+        <div className="inline-actions">
+          <button type="button" className="btn cancel-btn" onClick={onCancel}>Cancel</button>
+          <button type="submit" className="btn save-btn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    unit: '',
-    price: '',
-    stock: ''
-  });
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
-  const [error, setError] = useState('');
+
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [editingId, setEditingId] = useState(null); // Tracks which product is expanding inline
+  const [isAddingNew, setIsAddingNew] = useState(false);
+
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     fetchProducts();
@@ -26,317 +154,155 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await getProducts();
-      setProducts(response.products || []);
+      const res = await getProducts();
+      // Ensure all products have a valid id for dnd-kit
+      const secureProducts = (res.products || []).map((p, i) => ({ ...p, fallbackId: p._id || ("fallback-" + i) }));
+      setProducts(secureProducts);
     } catch (error) {
-      setError('Failed to fetch products');
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    setError('');
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedImage(file);
-      setImagePreview(URL.createObjectURL(file));
-      setError('');
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      setProducts((items) => {
+        const oldIndex = items.findIndex((i) => (i._id || i.fallbackId) === active.id);
+        const newIndex = items.findIndex((i) => (i._id || i.fallbackId) === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+      // In a real app we would ping the new order array to the DB right here.
     }
   };
 
-  const clearImage = () => {
-    setSelectedImage(null);
-    setImagePreview('');
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
+  const handleBulkDelete = async () => {
+    if (!window.confirm("Delete " + selectedIds.length + " products?")) return;
     try {
-      const productData = {
-        name: formData.name,
-        category: formData.category,
-        unit: formData.unit,
-        price: parseFloat(formData.price),
-        stock: parseFloat(formData.stock)
-      };
-
-      if (editingProduct) {
-        // Update existing product
-        await updateProduct(editingProduct._id, productData, selectedImage);
-      } else {
-        // Create new product
-        await createProduct(productData, selectedImage);
-      }
-
-      // Reset form and refresh products
-      resetForm();
+      // Deleting in parallel
+      await Promise.all(selectedIds.map(id => deleteProduct(id)));
+      setSelectedIds([]);
       fetchProducts();
     } catch (err) {
-      setError(err.message || 'Failed to save product');
+      alert("Bulk delete failed");
     }
   };
 
-  const handleEdit = (product) => {
-    setEditingProduct(product);
-    setFormData({
-      name: product.name,
-      category: product.category,
-      unit: product.unit,
-      price: product.price.toString(),
-      stock: product.stock.toString()
-    });
-    setShowForm(true);
+  const handleInlineSave = async (id, data, imageFile) => {
+    try {
+      if (id === 'NEW') {
+        const res = await createProduct({
+          ...data,
+          price: parseFloat(data.price),
+          stock: parseInt(data.stock)
+        }, imageFile);
+        setIsAddingNew(false);
+      } else {
+        await updateProduct(id, {
+          ...data,
+          price: parseFloat(data.price),
+          stock: parseInt(data.stock)
+        }, imageFile);
+        setEditingId(null);
+      }
+      fetchProducts();
+    } catch (err) {
+      alert("Save failed");
+    }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) {
-      return;
-    }
-
-    try {
+    if (window.confirm('Delete this product permanently?')) {
       await deleteProduct(id);
       fetchProducts();
-    } catch (err) {
-      setError(err.message || 'Failed to delete product');
     }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      category: '',
-      unit: '',
-      price: '',
-      stock: ''
-    });
-    setEditingProduct(null);
-    setShowForm(false);
-    setError('');
-    setSelectedImage(null);
-    setImagePreview('');
   };
 
   return (
-    <AdminLayout active="products" title="Products">
-      <div className="prod-header">
-        <div>
-          <div className="prod-title">Product Management</div>
-          <div className="prod-sub">Add, update and maintain stock</div>
-        </div>
-        <div className="prod-actions">
-          <button onClick={() => setShowForm(true)} className="btn btn-primary">
-            Add Product
+    <AdminLayout active="products" title="Inventory Management">
+
+      {/* Top Header Actions */}
+      <div className="prod-management-header">
+        <div className="left-controls">
+          <button className="create-new-btn" onClick={() => { setIsAddingNew(true); setEditingId(null); }}>
+            + Add New Product
           </button>
-          <button onClick={fetchProducts} className="btn">
-            Refresh
+          <button className="refresh-sync-btn" onClick={fetchProducts}>
+            ↻ Sync Data
           </button>
         </div>
       </div>
 
-      {error && <div className="prod-alert">{error}</div>}
-
-      {showForm && (
-        <div className="form-modal">
-          <div className="form-card">
-            <div className="form-title">
-              <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
-              <button onClick={resetForm} className="close-btn" type="button">&times;</button>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Product Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    placeholder="e.g., Rice"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Category *</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="" disabled>Select a category</option>
-                    {/* Preserve existing legacy category during edit if not in standard list */}
-                    {formData.category && 
-                     ![
-                       'Grain & cereals', 'Pulses & Dals', 'Spices & Masalas', 
-                       'Edible Oils & Ghee', 'Snacks & Packaged Foods', 'Fresh produce', 
-                       'Dairy & Bakery', 'Personal Care', 'Household & Cleaning', 'Others'
-                     ].includes(formData.category) && (
-                      <option value={formData.category}>{formData.category}</option>
-                    )}
-                    <option value="Grain & cereals">Grain & cereals</option>
-                    <option value="Pulses & Dals">Pulses & Dals</option>
-                    <option value="Spices & Masalas">Spices & Masalas</option>
-                    <option value="Edible Oils & Ghee">Edible Oils & Ghee</option>
-                    <option value="Snacks & Packaged Foods">Snacks & Packaged Foods</option>
-                    <option value="Fresh produce">Fresh produce</option>
-                    <option value="Dairy & Bakery">Dairy & Bakery</option>
-                    <option value="Personal Care">Personal Care</option>
-                    <option value="Household & Cleaning">Household & Cleaning</option>
-                    <option value="Others">Others</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Unit *</label>
-                  <input
-                    type="text"
-                    name="unit"
-                    value={formData.unit}
-                    onChange={handleChange}
-                    required
-                    placeholder="e.g., kg, liter, piece"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Price *</label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Stock Quantity *</label>
-                  <input
-                    type="number"
-                    name="stock"
-                    value={formData.stock}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group full-width">
-                  <label>Product Image</label>
-                  <div className="image-upload-container">
-                    <input
-                      type="file"
-                      id="productImage"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="image-input"
-                    />
-                    <label htmlFor="productImage" className="image-upload-label">
-                      {selectedImage ? selectedImage.name : 'Choose image file...'}
-                    </label>
-                    {imagePreview && (
-                      <div className="image-preview-container">
-                        <img src={imagePreview} alt="Product preview" className="image-preview" />
-                        <button type="button" onClick={clearImage} className="clear-image-btn">
-                          ×
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="form-actions">
-                <button type="button" onClick={resetForm} className="btn">
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingProduct ? 'Update' : 'Create'}
-                </button>
-              </div>
-            </form>
-          </div>
+      {/* New Product Inline Form Addition */}
+      {isAddingNew && (
+        <div className="new-product-wrapper">
+          <div className="new-header">Creating New Product Sequence</div>
+          <InlineEditForm
+            product={null}
+            onSave={(id, d, f) => handleInlineSave('NEW', d, f)}
+            onCancel={() => setIsAddingNew(false)}
+          />
         </div>
       )}
 
-      <div className="prod-panel">
+      {/* Drag & Drop Main Grid context */}
+      <div className="dnd-grid-container">
         {loading ? (
-          <div className="prod-loading">Loading products…</div>
-        ) : products.length === 0 ? (
-          <div className="prod-empty">
-            <div className="prod-empty-title">No products yet</div>
-            <div className="prod-empty-sub">Add your first product to start tracking stock.</div>
-            <button onClick={() => setShowForm(true)} className="btn btn-primary">
-              Add Product
-            </button>
-          </div>
+          <div className="skeleton-loader">Loading Inventory System...</div>
         ) : (
-          <div className="products-grid">
-            {products.map((product) => (
-              <div key={product._id} className="product-card">
-                <div className="product-image-container">
-                  {product.image && product.image.trim() !== '' ? (
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      className="product-image"
-                      onError={(e) => {
-                        console.log('Product image failed to load:', product.image);
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className="product-no-image" style={{display: product.image && product.image.trim() !== '' ? 'none' : 'flex'}}>
-                    No Image
-                  </div>
-                  <div className={`product-stock-badge ${product.stock === 0 ? 'out' : ''}`}>
-                    {product.stock} in stock
-                  </div>
-                </div>
-                
-                <div className="product-details">
-                  <div className="product-header">
-                    <h3 className="product-name">{product.name}</h3>
-                    <span className="product-price">₹{product.price.toFixed(2)} /{product.unit}</span>
-                  </div>
-                  
-                  <div className="product-category">
-                    {product.category}
-                  </div>
-                  
-                  <div className="product-actions-grid">
-                    <button onClick={() => handleEdit(product)} className="btn btn-secondary">
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(product._id)} className="btn btn-danger">
-                      Delete
-                    </button>
-                  </div>
-                </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={products.map(p => p._id || p.fallbackId)} strategy={rectSortingStrategy}>
+              <div className="sortable-list">
+                {products.map((product) => {
+                  const idString = product._id || product.fallbackId;
+                  const isEditing = editingId === idString;
+
+                  return (
+                    <div className="product-row-animator" key={idString}>
+                      {!isEditing ? (
+                        <SortableProductItem
+                          id={idString}
+                          product={product}
+                          isSelected={selectedIds.includes(product._id)}
+                          onToggleSelect={toggleSelect}
+                          onInlineEdit={() => { setEditingId(idString); setIsAddingNew(false); }}
+                          onDelete={handleDelete}
+                        />
+                      ) : (
+                        <div className="inline-edit-enclosure">
+                          <InlineEditForm
+                            product={product}
+                            onSave={handleInlineSave}
+                            onCancel={() => setEditingId(null)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
+
+      {/* Bulk Action Sliding Toolbar */}
+      <div className={"bulk-action-toolbar " + (selectedIds.length > 0 ? 'visible' : '')}>
+        <div className="bulk-info">
+          <span className="count">{selectedIds.length}</span> products selected
+        </div>
+        <div className="bulk-actions">
+          <button className="bulk-btn cancel" onClick={() => setSelectedIds([])}>Deselect</button>
+          <button className="bulk-btn apply-discount">Apply Discount (Demo)</button>
+          <button className="bulk-btn delete-all" onClick={handleBulkDelete}>Delete Selected</button>
+        </div>
+      </div>
+
     </AdminLayout>
   );
 };

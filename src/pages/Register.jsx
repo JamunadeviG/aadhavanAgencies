@@ -108,8 +108,8 @@ const Register = () => {
   };
 
   return (
-    <PageWrapper>
-      <PageContent>
+    <PageWrapper variant="premium">
+      <PageContent fullWidth>
         <div className="login-container">
           <Card className="login-card">
             <CardBody>

@@ -8,7 +8,7 @@ const Support = () => {
   const navigate = useNavigate();
 
   return (
-    <PageWrapper className="support-page">
+    <PageWrapper className="support-page" variant="premium">
       <EnhancedNavigation pageType="public" />
 
       <PageContent>
@@ -30,11 +30,11 @@ const Support = () => {
               <h2>Get in Touch</h2>
               <div className="contact-item">
                 <strong>Customer Care</strong>
-                <span>+91 97909 48214</span>
+                <span>+91 97901 78213</span>
               </div>
               <div className="contact-item">
                 <strong>Email</strong>
-                <span>support@aadhavanagencies.com</span>
+                <span>aadhavanagencies@gmail.com</span>
               </div>
               <div className="contact-item">
                 <strong>Head Office</strong>
@@ -89,7 +89,7 @@ const Support = () => {
           </div>
         </section>
       </PageContent>
-      
+
       <CommonFooter />
     </PageWrapper>
   );

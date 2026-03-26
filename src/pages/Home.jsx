@@ -12,7 +12,7 @@ const Home = () => {
     <PageWrapper className="home-page">
       <EnhancedNavigation pageType="public" />
       
-      <PageContent>
+      <PageContent fullWidth>
         <HeroSection />
       </PageContent>
 

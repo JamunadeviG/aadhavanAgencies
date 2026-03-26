@@ -186,7 +186,8 @@ const login = async (req, res) => {
         pincode: user.pincode,
         ownerName: user.ownerName,
         ownerEmail: user.ownerEmail,
-        ownerPhone: user.ownerPhone
+        ownerPhone: user.ownerPhone,
+        profilePic: user.profilePic
       }
     });
   } catch (error) {
@@ -194,8 +195,43 @@ const login = async (req, res) => {
   }
 };
 
+// Update user profile
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const updateData = { ...req.body };
+
+    // Handle profile picture if uploaded
+    if (req.file) {
+      updateData.profilePic = `/uploads/${req.file.filename}`;
+    }
+
+    // Remove password from updateData if provided
+    delete updateData.password;
+
+    const user = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+      runValidators: true
+    }).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Failed to update profile', error: error.message });
+  }
+};
+
 module.exports = {
   register,
   getProfile,
-  login
+  login,
+  updateProfile
 };

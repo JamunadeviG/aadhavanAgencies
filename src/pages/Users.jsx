@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout.jsx';
-import { getUsers } from '../services/userService.js';
+import { getUsers, deleteUser } from '../services/userService.js';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -18,10 +18,10 @@ const Users = () => {
       setLoading(true);
       setError('');
       console.log('👥 Fetching users...');
-      
+
       const response = await getUsers();
       console.log('👥 Users response:', response);
-      
+
       if (response.success && response.users) {
         setUsers(response.users);
         console.log('👥 Loaded users:', response.users.length);
@@ -35,7 +35,7 @@ const Users = () => {
       }
     } catch (error) {
       console.error('👥 Error fetching users:', error);
-      
+
       // Handle different error types
       if (error.code === 'NETWORK_ERROR') {
         setError('Network error. Unable to connect to server.');
@@ -49,7 +49,7 @@ const Users = () => {
         const errorMessage = error.message || 'Failed to load users. Please try again.';
         setError(errorMessage);
       }
-      
+
       setUsers([]);
     } finally {
       setLoading(false);
@@ -77,9 +77,9 @@ const Users = () => {
     }
 
     try {
-      // This would be implemented with deleteUser service
       console.log('👥 Delete user requested:', userId);
-      // For now, just remove from local state
+      await deleteUser(userId);
+      console.log('👥 User deleted successfully:', userId);
       setUsers(users.filter(user => user._id !== userId));
     } catch (error) {
       console.error('👥 Error deleting user:', error);
@@ -96,7 +96,7 @@ const Users = () => {
             <h2>Manage accounts</h2>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-primary" onClick={handleAddUser}>
+            <button className="btn btn-primary" style={{ width: 'auto' }} onClick={handleAddUser}>
               Add User
             </button>
             <button className="btn" onClick={fetchUsers}>
@@ -148,9 +148,8 @@ const Users = () => {
                   </td>
                   <td style={{ padding: '1rem' }}>
                     <span
-                      className={`status-chip ${
-                        user.role === 'Admin' ? 'admin' : 'customer'
-                      }`}
+                      className={`status-chip ${user.role === 'Admin' ? 'admin' : 'customer'
+                        }`}
                       style={{
                         padding: '0.25rem 0.75rem',
                         borderRadius: '1rem',
@@ -165,16 +164,16 @@ const Users = () => {
                   </td>
                   <td style={{ padding: '1rem', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                      <button 
-                        className="btn ghost" 
+                      <button
+                        className="btn ghost"
                         onClick={() => handleShowDetails(user)}
                         style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
                       >
                         Details
                       </button>
                       {user.role !== 'Admin' && (
-                        <button 
-                          className="btn btn-danger" 
+                        <button
+                          className="btn btn-danger"
                           onClick={() => handleDeleteUser(user._id)}
                           style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
                         >
@@ -246,9 +245,8 @@ const Users = () => {
                   <strong style={{ color: '#555' }}>Role:</strong>
                   <span>
                     <span
-                      className={`status-chip ${
-                        selectedUser.role === 'Admin' ? 'admin' : 'customer'
-                      }`}
+                      className={`status-chip ${selectedUser.role === 'Admin' ? 'admin' : 'customer'
+                        }`}
                       style={{
                         padding: '0.25rem 0.75rem',
                         borderRadius: '1rem',

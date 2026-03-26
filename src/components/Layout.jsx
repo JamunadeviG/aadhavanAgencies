@@ -5,7 +5,18 @@ import React from 'react';
  * These provide consistent structure across all pages
  */
 
-export const PageWrapper = ({ children, className = '' }) => {
+export const PageWrapper = ({ children, className = '', variant = 'default' }) => {
+  if (variant === 'premium') {
+    return (
+      <div className={`premium-bg-wrapper ${className}`}>
+        <div className="premium-bg-canvas"></div>
+        <div className="premium-bg-content">
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`page-wrapper ${className}`}>
       {children}
@@ -23,12 +34,16 @@ export const PageHeader = ({ children, className = '' }) => {
   );
 };
 
-export const PageContent = ({ children, className = '' }) => {
+export const PageContent = ({ children, className = '', fullWidth = false, containerSize = 'normal' }) => {
+  const containerClass = fullWidth
+    ? ''
+    : containerSize === 'xl'
+      ? 'container-xl'
+      : 'container';
+
   return (
     <main className={`page-content ${className}`}>
-      <div className="container">
-        {children}
-      </div>
+      {fullWidth ? children : <div className={containerClass}>{children}</div>}
     </main>
   );
 };
@@ -52,15 +67,15 @@ export const Section = ({ children, className = '', spacing = 'large' }) => {
   );
 };
 
-export const Card = ({ 
-  children, 
-  className = '', 
+export const Card = ({
+  children,
+  className = '',
   hover = false,
   padding = 'normal'
 }) => {
   const hoverClass = hover ? 'card-hover' : '';
   const paddingClass = padding === 'small' ? 'card-sm' : padding === 'large' ? 'card-lg' : '';
-  
+
   return (
     <div className={`card ${hoverClass} ${paddingClass} ${className}`}>
       {children}
@@ -92,15 +107,16 @@ export const CardFooter = ({ children, className = '' }) => {
   );
 };
 
-export const Grid = ({ 
-  children, 
-  cols = 1, 
-  gap = 4, 
-  className = '' 
+export const Grid = ({
+  children,
+  cols = 1,
+  gap = 4,
+  className = '',
+  responsive = true
 }) => {
-  const colsClass = `grid-cols-${cols}`;
+  const colsClass = responsive ? 'grid-responsive' : `grid-cols-${cols}`;
   const gapClass = `gap-${gap}`;
-  
+
   return (
     <div className={`grid ${colsClass} ${gapClass} ${className}`}>
       {children}
@@ -108,17 +124,17 @@ export const Grid = ({
   );
 };
 
-export const Flex = ({ 
-  children, 
-  direction = 'row', 
-  align = 'center', 
-  justify = 'start', 
-  className = '' 
+export const Flex = ({
+  children,
+  direction = 'row',
+  align = 'center',
+  justify = 'start',
+  className = ''
 }) => {
   const directionClass = direction === 'col' ? 'flex-col' : '';
   const alignClass = `items-${align}`;
   const justifyClass = `justify-${justify}`;
-  
+
   return (
     <div className={`flex ${directionClass} ${alignClass} ${justifyClass} ${className}`}>
       {children}
@@ -128,7 +144,7 @@ export const Flex = ({
 
 export const LoadingSpinner = ({ size = 'medium', className = '' }) => {
   const sizeClass = size === 'small' ? 'w-6 h-6' : size === 'large' ? 'w-12 h-12' : 'w-8 h-8';
-  
+
   return (
     <div className={`loading-spinner ${sizeClass} ${className}`}></div>
   );

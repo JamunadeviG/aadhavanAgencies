@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Base URL for API requests
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -37,7 +38,7 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('🔗 API Response Error:', error);
-    
+
     if (error.code === 'ECONNABORTED') {
       error.message = 'Request timeout. Server is taking too long to respond.';
     } else if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
@@ -46,7 +47,7 @@ api.interceptors.response.use(
       // Token expired or invalid - clear storage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      
+
       // Only redirect if not already on the login page
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
@@ -61,7 +62,7 @@ api.interceptors.response.use(
     } else if (error.response?.status === 500) {
       error.message = 'Server error. Please try again later.';
     }
-    
+
     return Promise.reject(error);
   }
 );

@@ -7,7 +7,7 @@ const getOffers = async (req, res) => {
     const offers = await Offer.find({})
       .populate('applicableProducts', 'name unit')
       .sort({ createdAt: -1 });
-    
+
     res.json({
       success: true,
       offers: offers
@@ -27,14 +27,14 @@ const getOfferById = async (req, res) => {
   try {
     const offer = await Offer.findById(req.params.id)
       .populate('applicableProducts', 'name unit');
-    
+
     if (!offer) {
       return res.status(404).json({
         success: false,
         message: 'Offer not found'
       });
     }
-    
+
     res.json({
       success: true,
       offer: offer
@@ -78,7 +78,7 @@ const createOffer = async (req, res) => {
     // Validate dates
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     if (start >= end) {
       return res.status(400).json({
         success: false,
@@ -130,7 +130,7 @@ const createOffer = async (req, res) => {
     });
 
     const savedOffer = await offer.save();
-    
+
     // Populate applicable products for response
     await savedOffer.populate('applicableProducts', 'name unit');
 
@@ -182,7 +182,7 @@ const updateOffer = async (req, res) => {
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+
       if (start >= end) {
         return res.status(400).json({
           success: false,
@@ -193,7 +193,7 @@ const updateOffer = async (req, res) => {
 
     // Check if coupon code already exists (if provided and different from current)
     if (couponCode && couponCode !== existingOffer.couponCode) {
-      const existingCoupon = await Offer.findOne({ 
+      const existingCoupon = await Offer.findOne({
         couponCode: couponCode.toUpperCase(),
         _id: { $ne: offerId }
       });
@@ -298,8 +298,8 @@ const getActiveOffers = async (req, res) => {
         { $expr: { $lt: ['$usedCount', '$usageLimit'] } }
       ]
     })
-    .populate('applicableProducts', 'name unit')
-    .sort({ createdAt: -1 });
+      .populate('applicableProducts', 'name unit')
+      .sort({ createdAt: -1 });
 
     res.json({
       success: true,
@@ -319,7 +319,7 @@ const getActiveOffers = async (req, res) => {
 const generateCouponCode = async (req, res) => {
   try {
     const offerId = req.params.id;
-    
+
     const offer = await Offer.findById(offerId);
     if (!offer) {
       return res.status(404).json({
@@ -335,7 +335,7 @@ const generateCouponCode = async (req, res) => {
 
     while (!isUnique && attempts < maxAttempts) {
       couponCode = offer.generateCouponCode();
-      
+
       const existingOffer = await Offer.findOne({ couponCode: couponCode });
       if (!existingOffer) {
         isUnique = true;

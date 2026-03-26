@@ -12,7 +12,10 @@ const cartRoutes = require('./routes/cartRoutes.js');
 const orderRoutes = require('./routes/orderRoutes.js');
 const userRoutes = require('./routes/userRoutes.js');
 const offerRoutes = require('./routes/offerRoutes.js');
+const notificationRoutes = require('./routes/notificationRoutes.js');
+const priceUpdateRoutes = require('./routes/priceUpdateRoutes.js');
 const { ensureDefaultAdmin } = require('./utils/adminSeeder.js');
+const { startPriceMonitorJob } = require('./services/priceMonitorService.js');
 
 // Load environment variables
 dotenv.config();
@@ -122,6 +125,8 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/offers', offerRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/price-updates', priceUpdateRoutes);
 
 // Simple test endpoint to verify server is working
 app.get('/api/test', (req, res) => {
@@ -183,6 +188,9 @@ const startServer = async () => {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+    
+    // Start the dynamic price monitor background job
+    startPriceMonitorJob();
   });
 };
 

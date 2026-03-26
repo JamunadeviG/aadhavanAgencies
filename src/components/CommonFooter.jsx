@@ -5,7 +5,7 @@ import { PageFooter, Grid, Flex } from './Layout.jsx';
  * Common Footer Component
  * Standardized footer for all pages
  */
-export const CommonFooter = ({ 
+export const CommonFooter = ({
   companyName = 'Aadhavan Agencies'
 }) => {
   const currentYear = new Date().getFullYear();
@@ -66,7 +66,7 @@ export const CommonFooter = ({
             color: '#ffffff',
             fontSize: '14px'
           }}>
-            <strong>Phone:</strong> +91 97909 48214
+            <strong>Phone:</strong> +91 97901 78213
           </div>
           <div style={{
             color: '#ffffff',
@@ -78,7 +78,7 @@ export const CommonFooter = ({
             color: '#ffffff',
             fontSize: '14px'
           }}>
-            <strong>Address:</strong> No. 35,Thalagiriyar Street, Thiruvannamalai, TamilNadu  – 606601 
+            <strong>Address:</strong> No. 35,Thalagiriyar Street, Thiruvannamalai, TamilNadu  – 606601
           </div>
         </div>
 
@@ -104,8 +104,8 @@ export const CommonFooter = ({
 /**
  * Simple Footer for minimal pages
  */
-export const SimpleFooter = ({ 
-  companyName = 'Aadhavan Agencies' 
+export const SimpleFooter = ({
+  companyName = 'Aadhavan Agencies'
 }) => {
   const currentYear = new Date().getFullYear();
 

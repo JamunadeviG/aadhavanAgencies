@@ -8,7 +8,7 @@ const About = () => {
   const navigate = useNavigate();
 
   return (
-    <PageWrapper className="about-page">
+    <PageWrapper className="about-page" variant="premium">
       <EnhancedNavigation pageType="public" />
 
       <PageContent>
@@ -41,9 +41,9 @@ const About = () => {
             <div className="story-card card">
               <h2>Our Values</h2>
               <p>
-                <strong>Freshness:</strong> Daily sourcing from trusted farms and producers.<br/>
-                <strong>Reliability:</strong> 24‑hour delivery across 18 districts.<br/>
-                <strong>Integrity:</strong> Fair pricing and honest business practices.<br/>
+                <strong>Freshness:</strong> Daily sourcing from trusted farms and producers.<br />
+                <strong>Reliability:</strong> 24‑hour delivery across 18 districts.<br />
+                <strong>Integrity:</strong> Fair pricing and honest business practices.<br />
                 <strong>Community:</strong> Supporting local retailers and growers.
               </p>
             </div>
@@ -71,7 +71,7 @@ const About = () => {
           </div>
         </section>
       </PageContent>
-      
+
       <CommonFooter />
     </PageWrapper>
   );

@@ -51,7 +51,9 @@
   padding: 24px;
   border-radius: 22px;
   border: 1px solid rgba(19, 83, 42, 0.08);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: grid;
   gap: 20px;
 }
@@ -75,7 +77,8 @@
 }
 
 .contact-item span {
-  color: var(--muted);
+  color: #ffffff;
+  opacity: 0.9;
   font-size: 15px;
 }
 
@@ -117,7 +120,9 @@
   padding: 24px;
   border-radius: 22px;
   border: 1px solid rgba(19, 83, 42, 0.08);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: grid;
   gap: 12px;
 }
@@ -131,7 +136,8 @@
 
 .faq-card p {
   margin: 0;
-  color: var(--muted);
+  color: #ffffff;
+  opacity: 0.8;
   line-height: 1.6;
 }
 
@@ -261,6 +267,7 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
 .site-footer {
   background: #051e10;
   color: rgba(255, 255, 255, 0.85);
@@ -352,6 +359,7 @@
 }
 
 @media (max-width: 768px) {
+
   .hero-grid,
   .cta-card {
     padding: 20px;

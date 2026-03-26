@@ -18,7 +18,9 @@ import Orders from './pages/Orders.jsx';
 import Cart from './pages/Cart.jsx';
 import UserTrackOrders from './pages/UserTrackOrders.jsx';
 import EditProfile from './pages/EditProfile.jsx';
+import PriceApprovals from './pages/PriceApprovals.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import ChatWidget from './components/ChatWidget.jsx';
 import { isAuthenticated, getStoredUser } from './services/authService.js';
 import './App.css';
 
@@ -165,10 +167,19 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/price-approvals"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <PriceApprovals />
+            </ProtectedRoute>
+          }
+        />
         
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ChatWidget />
     </Router>
   );
 }

@@ -1,0 +1,301 @@
+/* Admin Track Orders */
+
+.admin-table-wrapper {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+.orders-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.orders-kicker {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.orders-title-block h2 {
+  margin: 0.25rem 0 0 0;
+  font-size: 1.5rem;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.sync-orders-btn {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sync-orders-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.orders-error-alert {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 1rem 2rem;
+  font-weight: 600;
+  border-bottom: 1px solid #fecaca;
+}
+
+.table-responsive-container {
+  overflow-x: auto;
+  min-height: 400px;
+}
+
+.orders-loader,
+.orders-empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.interactive-orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.interactive-orders-table th {
+  padding: 1rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #475569;
+  background: white;
+  border-bottom: 2px solid #e2e8f0;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.interactive-orders-table th:hover {
+  background: #f8fafc;
+}
+
+.sort-icon {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-weight: 800;
+  transition: transform 0.3s;
+}
+
+.sort-icon.neutral {
+  color: #cbd5e1;
+}
+
+.sort-icon.active {
+  color: #3b82f6;
+}
+
+.interactive-orders-table td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.fw-bold {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.text-muted {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.item-count-badge {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.amount-col {
+  font-weight: 800;
+  color: #1a3c2e;
+}
+
+.date-col {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Row Hover Highlights */
+.table-row-hover {
+  transition: all 0.3s;
+}
+
+.table-row-hover:hover {
+  background: #f8fafc;
+  transform: scale(1.002);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.row-updating {
+  opacity: 0.6;
+  pointer-events: none;
+  animation: pulseRow 1s infinite alternate;
+}
+
+@keyframes pulseRow {
+  0% {
+    background: white;
+  }
+
+  100% {
+    background: #f0fdf4;
+  }
+}
+
+/* Static Status Pills */
+.status-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: capitalize;
+}
+
+.status-pill.s-placed {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.status-pill.s-processing {
+  background: #fef9c3;
+  color: #ca8a04;
+}
+
+.status-pill.s-shipped {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+.status-pill.s-delivered {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status-pill.s-cancelled {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.status-pill.s-cancellation-requested {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.status-pill.s-pending {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* Interactive Dropdown */
+.action-col {
+  width: 140px;
+}
+
+.status-dropdown {
+  appearance: none;
+  width: 100%;
+  padding: 8px 30px 8px 15px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  color: white;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 10px auto;
+}
+
+/* Color Code Status Dropdown mapping */
+.status-dropdown.s-placed {
+  background-color: #3b82f6;
+  border-color: #2563eb;
+}
+
+.status-dropdown.s-processing {
+  background-color: #f59e0b;
+  border-color: #d97706;
+}
+
+.status-dropdown.s-shipped {
+  background-color: #f97316;
+  border-color: #ea580c;
+}
+
+.status-dropdown.s-delivered {
+  background-color: #10b981;
+  border-color: #059669;
+}
+
+.status-dropdown.s-cancelled {
+  background-color: #ef4444;
+  border-color: #dc2626;
+}
+
+.status-dropdown.s-cancellation-requested {
+  background-color: #f97316;
+  border-color: #c2410c;
+}
+
+.status-dropdown.s-pending {
+  background-color: #64748b;
+  border-color: #475569;
+}
+
+.status-dropdown:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  filter: brightness(1.1);
+}
+
+.status-dropdown:focus {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Base Option styling applied to children mapping OS behavior */
+.status-dropdown option {
+  background: white;
+  color: #0f172a;
+  font-weight: 600;
+  padding: 10px;
+}

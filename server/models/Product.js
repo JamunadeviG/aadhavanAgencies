@@ -33,6 +33,29 @@ const productSchema = new mongoose.Schema({
     type: String,
     default: null,
     trim: true
+  },
+  mrp: {
+    type: Number,
+    default: null
+  },
+  priceSourceUrl: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  priceSourceType: {
+    type: String,
+    enum: ['API', 'SCRAPE', null],
+    default: null
+  },
+  priceSelector: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  lastPriceCheck: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

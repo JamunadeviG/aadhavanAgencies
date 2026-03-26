@@ -3,7 +3,7 @@ const Product = require('../models/Product.js');
 // Create a new product
 const createProduct = async (req, res) => {
   try {
-    const { name, category, unit, price, stock } = req.body;
+    const { name, category, unit, price, stock, mrp, priceSourceUrl, priceSourceType, priceSelector } = req.body;
 
     // Validate required fields
     if (!name || !category || !unit || price === undefined || stock === undefined) {
@@ -27,6 +27,10 @@ const createProduct = async (req, res) => {
       unit,
       price,
       stock,
+      mrp,
+      priceSourceUrl,
+      priceSourceType,
+      priceSelector,
       image: imagePath
     });
 
@@ -67,7 +71,7 @@ const getProducts = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, category, unit, price, stock } = req.body;
+    const { name, category, unit, price, stock, mrp, priceSourceUrl, priceSourceType, priceSelector } = req.body;
 
     // Find product by ID
     const product = await Product.findById(id);
@@ -84,6 +88,10 @@ const updateProduct = async (req, res) => {
     if (unit !== undefined) product.unit = unit;
     if (price !== undefined) product.price = price;
     if (stock !== undefined) product.stock = stock;
+    if (mrp !== undefined) product.mrp = mrp;
+    if (priceSourceUrl !== undefined) product.priceSourceUrl = priceSourceUrl;
+    if (priceSourceType !== undefined) product.priceSourceType = priceSourceType;
+    if (priceSelector !== undefined) product.priceSelector = priceSelector;
 
     // Handle image update
     if (req.file) {

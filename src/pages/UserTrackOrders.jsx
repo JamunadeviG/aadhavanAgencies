@@ -16,6 +16,7 @@ const UserTrackOrders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState(null); // Newly added for smooth expand
   const [showStatusUpdate, setShowStatusUpdate] = useState(false);
   const [updateStatus, setUpdateStatus] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -25,7 +26,7 @@ const UserTrackOrders = () => {
   useEffect(() => {
     // Clear any test data from localStorage
     localStorage.removeItem('orders');
-    
+
     loadOrders();
     // Check if user is admin
     setIsAdmin(user?.role === 'admin');
@@ -34,7 +35,7 @@ const UserTrackOrders = () => {
   const loadOrders = async () => {
     try {
       console.log('🔍 UserTrackOrders: Fetching orders for user:', user.id);
-      
+
       if (!user?.id) {
         setError('User not found. Please login again.');
         setLoading(false);
@@ -44,7 +45,7 @@ const UserTrackOrders = () => {
       const response = await getUserOrders(user.id);
       console.log('🔍 UserTrackOrders: API Response:', response);
       console.log('🔍 UserTrackOrders: Orders from API:', response.orders);
-      
+
       // Debug: Log each order's status
       if (response.orders) {
         response.orders.forEach((order, index) => {
@@ -56,25 +57,25 @@ const UserTrackOrders = () => {
           });
         });
       }
-      
+
       setOrders(response.orders || []);
       setLoading(false);
     } catch (error) {
       console.error('🔍 UserTrackOrders: Error loading orders from API:', error);
       console.warn('🔍 UserTrackOrders: Backend not available, using localStorage fallback');
-      
+
       // Fallback to localStorage when backend is not available
       try {
         const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         console.log('🔍 UserTrackOrders: Loaded orders from localStorage:', localOrders.length);
-        
+
         // Filter orders for current user
-        const userOrders = localOrders.filter(order => 
+        const userOrders = localOrders.filter(order =>
           order.userId === user.id || order.customerId === user.id || order.userEmail === user.email
         );
-        
+
         console.log('🔍 UserTrackOrders: Filtered orders for current user:', userOrders.length);
-        
+
         // Debug: Log each order's status
         if (userOrders) {
           userOrders.forEach((order, index) => {
@@ -86,10 +87,10 @@ const UserTrackOrders = () => {
             });
           });
         }
-        
+
         setOrders(userOrders);
         setLoading(false);
-        
+
         if (userOrders.length === 0) {
           console.log('🔍 UserTrackOrders: No orders found in localStorage, creating sample data');
           // Create sample order data for testing
@@ -117,7 +118,7 @@ const UserTrackOrders = () => {
                   unitPrice: 250
                 },
                 {
-                  name: 'Sugar 1kg', 
+                  name: 'Sugar 1kg',
                   productName: 'Sugar 1kg',
                   quantity: 3,
                   price: 150,
@@ -156,7 +157,7 @@ const UserTrackOrders = () => {
                 },
                 {
                   name: 'Dal 1kg',
-                  productName: 'Dal 1kg', 
+                  productName: 'Dal 1kg',
                   quantity: 4,
                   price: 80,
                   unitPrice: 20
@@ -188,12 +189,12 @@ const UserTrackOrders = () => {
               ]
             }
           ];
-          
+
           console.log('🔍 UserTrackOrders: Created sample orders for testing');
           setOrders(sampleOrders);
           setLoading(false);
         }
-        
+
       } catch (localError) {
         console.error('🔍 UserTrackOrders: Error loading from localStorage:', localError);
         setError('Failed to load orders. Please refresh the page.');
@@ -213,41 +214,41 @@ const UserTrackOrders = () => {
       setError('');
       const orderId = selectedOrder.orderId || selectedOrder._id || selectedOrder.id;
       const previousStatus = selectedOrder.status;
-      
+
       console.log('📦 User updating order status:', orderId, 'to:', updateStatus);
       console.log('📦 Previous status:', previousStatus);
-      
+
       // Use the stock-aware status update function
       const response = await updateOrderStatusWithStock(orderId, updateStatus, previousStatus, selectedOrder);
       console.log('📦 Update response:', response);
-      
+
       // Update local state with stock processing info
-      const updatedOrder = { 
-        ...selectedOrder, 
-        status: updateStatus, 
+      const updatedOrder = {
+        ...selectedOrder,
+        status: updateStatus,
         updatedAt: new Date().toISOString(),
         stockProcessed: response.stockUpdate?.success ? true : selectedOrder.stockProcessed,
         lastStockUpdate: response.stockUpdate ? new Date().toISOString() : selectedOrder.lastStockUpdate
       };
-      
-      setOrders(orders.map(order => 
+
+      setOrders(orders.map(order =>
         (order.orderId || order._id || order.id) === orderId ? updatedOrder : order
       ));
-      
+
       // Update selected order
       setSelectedOrder(updatedOrder);
-      
+
       // Close status update modal
       setShowStatusUpdate(false);
       setUpdateStatus('');
-      
+
       // Show success message with stock update info
       let successMessage = `Order #${orderId} status updated to ${updateStatus}`;
       if (response.stockUpdate?.success) {
         successMessage += `. ${response.stockUpdate.message}`;
       }
       alert(successMessage);
-      
+
     } catch (error) {
       console.error('📦 Error updating order status:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to update order status';
@@ -260,73 +261,76 @@ const UserTrackOrders = () => {
     console.log('📦 [DEBUG] handleCancelOrder called');
     console.log('📦 [DEBUG] orderToCancel:', orderToCancel);
     console.log('📦 [DEBUG] typeof orderToCancel:', typeof orderToCancel);
-    
+
     if (!orderToCancel) {
       console.error('🔍 [ERROR] No order to cancel - orderToCancel is undefined');
       alert('Error: No order selected for cancellation. Please try again.');
       return;
     }
-    
+
     // Additional validation
     if (!orderToCancel.id && !orderToCancel._id && !orderToCancel.orderId) {
       console.error('🔍 [ERROR] Order has no valid ID:', orderToCancel);
       alert('Error: Invalid order data. Please refresh the page and try again.');
       return;
     }
-    
+
     if (!orderToCancel.status) {
       console.error('🔍 [ERROR] Order has no status:', orderToCancel);
       alert('Error: Order status is missing. Please refresh the page and try again.');
       return;
     }
-    
+
     console.log('📦 [DEBUG] All validations passed, proceeding with cancellation');
 
     try {
       setError('');
       const orderId = orderToCancel.orderId || orderToCancel._id || orderToCancel.id;
       const previousStatus = orderToCancel.status;
-      
+
       console.log('📦 User cancelling order:', orderId);
       console.log('📦 Previous status:', previousStatus);
       console.log('📦 Order details:', orderToCancel);
-      
+
       // Check if order can be cancelled before proceeding
       const canCancel = canCancelOrder(orderToCancel);
       console.log('📦 Can cancel this order:', canCancel);
-      
+
       if (!canCancel) {
         const status = (orderToCancel.status || '').toLowerCase().trim();
         alert(`Cannot cancel order with status: "${status}". Orders can only be cancelled when status is "pending", "placed", or "processing".`);
         return;
       }
-      
-      console.log('📦 [DEBUG] About to call updateOrderStatusWithStock');
-      
+
+      const currentStatus = (orderToCancel.status || '').toLowerCase().trim();
+      const newStatus = currentStatus === 'pending' ? 'cancelled' : 'cancellation_requested';
+
+      console.log(`📦 [DEBUG] About to call updateOrderStatusWithStock`);
+
       // Try to use the stock-aware status update function first
       try {
-        console.log('📦 Attempting to cancel order via API...');
-        const response = await updateOrderStatusWithStock(orderId, 'cancelled', previousStatus, orderToCancel);
+        console.log(`📦 Attempting to cancel order via API... Status: ${newStatus}`);
+        const response = await updateOrderStatusWithStock(orderId, newStatus, previousStatus, orderToCancel);
         console.log('📦 Cancel response (API):', response);
-        
+
         if (!response.success) {
           throw new Error(response.message || 'Failed to cancel order');
         }
-        
+
         console.log('📦 [DEBUG] API call successful, updating local state');
-        
+
         // Update local state with stock processing info
-        const updatedOrder = { 
-          ...orderToCancel, 
-          status: 'cancelled', 
-          cancelledAt: new Date().toISOString(),
+        const updatedOrder = {
+          ...orderToCancel,
+          status: newStatus,
+          ...(newStatus === 'cancelled' ? { cancelledAt: new Date().toISOString() } : {}),
           stockProcessed: response.stockUpdate?.success ? true : orderToCancel.stockProcessed,
           lastStockUpdate: response.stockUpdate ? new Date().toISOString() : orderToCancel.lastStockUpdate
         };
-        
+
         console.log('📦 Updating local state for order:', orderId);
         console.log('📦 Updated order object:', updatedOrder);
-        
+
         setOrders(prevOrders => {
           const updatedOrders = prevOrders.map(order => {
             const currentOrderId = order.id || order._id || order.orderId;
@@ -337,19 +341,21 @@ const UserTrackOrders = () => {
             }
             return order;
           });
-          
+
           console.log('📦 Orders after update:', updatedOrders);
           return updatedOrders;
         });
-        
+
         console.log('📦 [DEBUG] Local state updated successfully');
-        
+
         // Create admin notification for order cancellation
         const adminNotification = {
           id: `NOTIF-${Date.now()}`,
-          type: 'order_cancelled',
-          title: 'Order Cancelled',
-          message: `Order #${orderId} has been cancelled by customer`,
+          type: newStatus === 'cancelled' ? 'order_cancelled' : 'cancellation_requested',
+          title: newStatus === 'cancelled' ? 'Order Cancelled' : 'Cancellation Requested',
+          message: newStatus === 'cancelled'
+            ? `Order #${orderId} has been cancelled by customer`
+            : `Customer requested cancellation for Order #${orderId}`,
           orderId: orderId,
           customerName: orderToCancel.customerName,
           customerPhone: orderToCancel.customerPhone,
@@ -358,28 +364,30 @@ const UserTrackOrders = () => {
           status: 'unread',
           createdAt: new Date().toISOString()
         };
-        
+
         const existingNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
         existingNotifications.unshift(adminNotification);
         localStorage.setItem('adminNotifications', JSON.stringify(existingNotifications));
-        
+
         // Trigger admin notification event
         window.dispatchEvent(new CustomEvent('adminNotification', { detail: adminNotification }));
-        
+
         console.log('📦 [DEBUG] About to close modal and reset state');
-        
+
         // Close modal and reset state
         setShowCancelConfirm(false);
         setOrderToCancel(null);
-        
+
         // Show success message with stock restoration info
-        let successMessage = `✅ Order #${orderId} has been cancelled successfully!\n\n`;
+        let successMessage = newStatus === 'cancelled'
+          ? `✅ Order #${orderId} has been cancelled successfully!\n\n`
+          : `✅ Cancellation request for Order #${orderId} has been sent to Admin!\n\n`;
         successMessage += `📋 Order Details:\n`;
         successMessage += `• Customer: ${orderToCancel.customerName}\n`;
         successMessage += `• Total Amount: ₹${orderToCancel.total || orderToCancel.totalAmount || 0}\n`;
         successMessage += `• Items: ${orderToCancel.items?.length || 0} items\n`;
-        successMessage += `• Status: Changed to "Cancelled"\n`;
-        
+        successMessage += `• Status: Changed to "${newStatus === 'cancelled' ? 'Cancelled' : 'Cancellation Requested'}"\n`;
+
         if (response.stockUpdate?.success) {
           successMessage += `\n📦 Stock Management:\n`;
           successMessage += `• ${response.stockUpdate.message}\n`;
@@ -387,46 +395,48 @@ const UserTrackOrders = () => {
             successMessage += `• Stock restored for ${response.stockUpdate.updates.length} products\n`;
           }
         }
-        
+
         successMessage += `\n📧 Admin has been notified about this cancellation.`;
-        
+
         console.log('📦 [DEBUG] Showing success message');
         alert(successMessage);
-        
+
       } catch (apiError) {
         console.warn('📦 Backend API not available, using localStorage fallback:', apiError.message);
-        
+
         // Fallback to localStorage when backend is not available
         console.log('📦 Using localStorage fallback for order cancellation');
-        
+
         // Update order in localStorage
         const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         console.log('📦 LocalStorage orders before update:', localOrders.length);
-        
+
         const updatedLocalOrders = localOrders.map(order => {
           const currentOrderId = order.id || order._id || order.orderId;
           console.log(`📦 [LOCAL] Checking order ${currentOrderId} against cancelled order ${orderId}`);
-          
+
           if (currentOrderId === orderId) {
-            console.log('📦 [LOCAL] Found matching order, updating status to cancelled');
-            return { ...order, status: 'cancelled', cancelledAt: new Date().toISOString() };
+            console.log(`📦 [LOCAL] Found matching order, updating status to ${newStatus}`);
+            return { ...order, status: newStatus, ...(newStatus === 'cancelled' ? { cancelledAt: new Date().toISOString() } : {}) };
           }
           return order;
         });
-        
+
         localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
         console.log('📦 [LOCAL] Updated orders in localStorage:', updatedLocalOrders.length);
-        
+
         // Update local state
         console.log('📦 [LOCAL] Updating React state with cancelled orders');
         setOrders(updatedLocalOrders);
-        
+
         // Create admin notification
         const adminNotification = {
           id: `NOTIF-${Date.now()}`,
-          type: 'order_cancelled',
-          title: 'Order Cancelled',
-          message: `Order #${orderId} has been cancelled by customer (Local Mode)`,
+          type: newStatus === 'cancelled' ? 'order_cancelled' : 'cancellation_requested',
+          title: newStatus === 'cancelled' ? 'Order Cancelled' : 'Cancellation Requested',
+          message: newStatus === 'cancelled'
+            ? `Order #${orderId} has been cancelled by customer (Local Mode)`
+            : `Customer requested cancellation for Order #${orderId} (Local Mode)`,
           orderId: orderId,
           customerName: orderToCancel.customerName,
           customerPhone: orderToCancel.customerPhone,
@@ -435,32 +445,34 @@ const UserTrackOrders = () => {
           status: 'unread',
           createdAt: new Date().toISOString()
         };
-        
+
         const existingNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
         existingNotifications.unshift(adminNotification);
         localStorage.setItem('adminNotifications', JSON.stringify(existingNotifications));
-        
+
         // Trigger admin notification event
         window.dispatchEvent(new CustomEvent('adminNotification', { detail: adminNotification }));
-        
+
         // Close modal and reset state
         setShowCancelConfirm(false);
         setOrderToCancel(null);
-        
+
         // Show success message
-        let successMessage = `✅ Order #${orderId} has been cancelled successfully!\n\n`;
+        let successMessage = newStatus === 'cancelled'
+          ? `✅ Order #${orderId} has been cancelled successfully!\n\n`
+          : `✅ Cancellation request for Order #${orderId} has been sent to Admin!\n\n`;
         successMessage += `📋 Order Details:\n`;
         successMessage += `• Customer: ${orderToCancel.customerName}\n`;
         successMessage += `• Total Amount: ₹${orderToCancel.total || orderToCancel.totalAmount || 0}\n`;
         successMessage += `• Items: ${orderToCancel.items?.length || 0} items\n`;
-        successMessage += `• Status: Changed to "Cancelled"\n`;
+        successMessage += `• Status: Changed to "${newStatus === 'cancelled' ? 'Cancelled' : 'Cancellation Requested'}"\n`;
         successMessage += `\n📦 Note: Running in offline mode - backend not available`;
         successMessage += `\n📧 Admin has been notified about this cancellation.`;
-        
+
         alert(successMessage);
-        
+
       }
-      
+
     } catch (error) {
       console.error('📦 [ERROR] Error cancelling order:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to cancel order';
@@ -469,7 +481,7 @@ const UserTrackOrders = () => {
         stack: error.stack,
         response: error.response?.data
       });
-      
+
       setError(errorMessage);
       alert(`Error: ${errorMessage}\n\nPlease check the console (F12) for more details.`);
     }
@@ -501,29 +513,29 @@ const UserTrackOrders = () => {
     // Specific function for cancellation - pending, placed and processing
     const status = (order.status || '').toLowerCase().trim();
     const orderId = order.id || order._id || order.orderId;
-    
+
     console.log(`🔍 [DEBUG] Checking cancellation for order ${orderId}:`);
     console.log(`🔍 [DEBUG] - Raw status: "${order.status}"`);
     console.log(`🔍 [DEBUG] - Normalized status: "${status}"`);
     console.log(`🔍 [DEBUG] - Order object:`, order);
-    
+
     const canCancel = status === 'pending' || status === 'placed' || status === 'processing';
     console.log(`🔍 [DEBUG] - Can cancel: ${canCancel}`);
     console.log(`🔍 [DEBUG] - Status check: "${status}" === "pending" = ${status === 'pending'}`);
     console.log(`🔍 [DEBUG] - Status check: "${status}" === "placed" = ${status === 'placed'}`);
     console.log(`🔍 [DEBUG] - Status check: "${status}" === "processing" = ${status === 'processing'}`);
-    
+
     return canCancel;
   };
 
   const getNormalizedStatus = (order) => {
     // Normalize status to handle various formats
     let status = order.status || 'placed'; // Default to 'placed' if no status
-    
+
     // Handle various status formats
     if (typeof status === 'string') {
       status = status.toLowerCase().trim();
-      
+
       // Map common variations to standard statuses
       const statusMap = {
         'confirmed': 'processing',
@@ -534,12 +546,12 @@ const UserTrackOrders = () => {
         'complete': 'delivered',
         'finished': 'delivered'
       };
-      
+
       if (statusMap[status]) {
         status = statusMap[status];
       }
     }
-    
+
     console.log(`🔍 Normalized status for order ${order.id || order._id}: "${order.status}" → "${status}"`);
     return status;
   };
@@ -582,19 +594,29 @@ const UserTrackOrders = () => {
   const filteredOrders = orders.filter(order => {
     const normalizedStatus = getNormalizedStatus(order);
     const matchesStatus = filterStatus === 'all' || normalizedStatus === filterStatus;
-    const matchesSearch = searchQuery === '' || 
-      (order.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (order.customerName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (order.customerPhone || '').includes(searchQuery);
-    
-    console.log(`🔍 [FILTER] Order ${order.id || order._id || order.orderId}:`);
-    console.log(`🔍 [FILTER]   - Normalized Status: "${normalizedStatus}"`);
-    console.log(`🔍 [FILTER]   - Filter Status: "${filterStatus}"`);
-    console.log(`🔍 [FILTER]   - Matches Status: ${matchesStatus}`);
-    console.log(`🔍 [FILTER]   - Search Query: "${searchQuery}"`);
-    console.log(`🔍 [FILTER]   - Matches Search: ${matchesSearch}`);
-    console.log(`🔍 [FILTER]   - Final Include: ${matchesStatus && matchesSearch}`);
-    
+
+    // Improved search logic
+    let query = searchQuery.toLowerCase().trim();
+    if (!query) return matchesStatus;
+
+    // Handle leading '#' commonly used in the UI
+    if (query.startsWith('#')) query = query.slice(1);
+
+    const orderIdFull = (order.orderId || order._id || order.id || '').toString().toLowerCase();
+    const customerName = (order.customerName || '').toLowerCase();
+    const customerPhone = (order.customerPhone || '').toLowerCase();
+
+    // Check if any product name matches
+    const matchesProducts = order.items?.some(item =>
+      (item.name || item.productName || '').toLowerCase().includes(query)
+    );
+
+    const matchesSearch =
+      orderIdFull.includes(query) ||
+      customerName.includes(query) ||
+      customerPhone.includes(query) ||
+      matchesProducts;
+
     return matchesStatus && matchesSearch;
   });
 
@@ -633,490 +655,212 @@ const UserTrackOrders = () => {
         <div className="container">
           <div className="loading">
             <div className="loading-spinner"></div>
-            <p>Loading your orders...</p>
+            <p>Loading your logistics data...</p>
           </div>
         </div>
       </div>
     );
   }
 
+  // Visual Stepper Render Engine
+  const renderStepper = (currentStatus) => {
+    const statusSequence = ['pending', 'placed', 'processing', 'shipped', 'delivered'];
+
+    // Normalize mapping
+    let nStatus = currentStatus?.toLowerCase() || 'pending';
+    if (nStatus === 'confirmed') nStatus = 'processing';
+    if (nStatus === 'ready' || nStatus === 'on the way' || nStatus === 'out for delivery') nStatus = 'shipped';
+
+    // Check if cancelled
+    if (nStatus === 'cancelled') {
+      return (
+        <div className="stepper-cancelled-flag">
+          <span className="fail-icon">✕</span>
+          Order Cancelled
+        </div>
+      );
+    }
+
+    let currentIndex = statusSequence.indexOf(nStatus);
+    if (currentIndex === -1) currentIndex = 1; // fallback to placed
+
+    return (
+      <div className="modern-stepper">
+        {statusSequence.map((step, idx) => {
+          const isCompleted = idx <= currentIndex;
+          const isActive = idx === currentIndex;
+          const isLast = idx === statusSequence.length - 1;
+
+          return (
+            <div key={step} className={`step-segment ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}>
+              <div className="step-point">
+                <div className="step-circle">{isCompleted ? '✓' : ''}</div>
+                {!isLast && <div className="step-line"></div>}
+              </div>
+              <span className="step-label">{step.charAt(0).toUpperCase() + step.slice(1)}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <PageWrapper>
       <UserNavbar />
       <PageContent>
-        <div className="user-track-orders">
-      <div className="container">
-        <div className="track-orders-header">
-          <h1>Track Your Orders</h1>
-          <p>View and track all your orders</p>
-        </div>
+        <div className="modern-tracking-layout">
+          <div className="tracking-header-sec">
+            <h1>Logistics Tracker</h1>
+            <p className="subtitle">Real-time mapping of your wholesale pipeline</p>
+          </div>
 
-        <div className="orders-controls">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search by Order ID, Name, or Phone..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
-            />
-          </div>
-          <div className="filter-controls">
-            <select 
-              value={filterStatus} 
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">All Orders</option>
-              <option value="pending">Pending</option>
-              <option value="placed">Placed</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-          <button 
-            className="btn btn-outline"
-            onClick={() => {
-              console.log('🔍 [DEBUG] Current Orders Analysis:');
-              console.log('🔍 [DEBUG] Total orders:', orders.length);
-              
-              orders.forEach((order, index) => {
-                const status = (order.status || '').toLowerCase().trim();
-                const canCancel = status === 'pending' || status === 'placed' || status === 'processing';
-                const orderId = order.id || order._id || order.orderId || 'NO_ID';
-                
-                console.log(`🔍 [DEBUG] Order ${index}:`);
-                console.log(`🔍 [DEBUG]   - ID: ${orderId}`);
-                console.log(`🔍 [DEBUG]   - Status: "${order.status}"`);
-                console.log(`🔍 [DEBUG]   - Normalized: "${status}"`);
-                console.log(`🔍 [DEBUG]   - Can Cancel: ${canCancel}`);
-                console.log(`🔍 [DEBUG]   - Should show cancel button: ${canCancel}`);
-              });
-              
-              alert(`Debug: Check console (F12) for detailed order analysis.\n\nTotal Orders: ${orders.length}\n\nLook for "Should show cancel button: true" messages.`);
-            }}
-          >
-            🔍 Debug Cancellation
-          </button>
-        </div>
-
-        {filteredOrders.length === 0 ? (
-          <div className="empty-orders">
-            <div className="empty-icon">📦</div>
-            <h2>No Orders Found</h2>
-            <p>
-              {searchQuery || filterStatus !== 'all' 
-                ? 'Try adjusting your search or filters'
-                : 'You haven\'t placed any orders yet. Start shopping to see your orders here!'
-              }
-            </p>
-            <button 
-              className="btn btn-primary"
-              onClick={() => navigate('/user-home')}
-            >
-              Start Shopping
-            </button>
-          </div>
-        ) : (
-          <div className="orders-list">
-            <div className="orders-count">
-              <p>Showing {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}</p>
+          <div className="tracking-toolbar slide-fade-in">
+            <div className="search-pill">
+              <span className="s-icon">🔍</span>
+              <input
+                type="text"
+                placeholder="Search order ID or items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            
-            {filteredOrders.map((order) => {
-              const normalizedStatus = getNormalizedStatus(order);
-              const canCancel = canCancelOrder(order);
-              const orderId = order.id || order._id || order.orderId;
-              
-              console.log(`🔍 [RENDER] Order ${orderId}:`);
-              console.log(`🔍 [RENDER] - Raw status: "${order.status}"`);
-              console.log(`🔍 [RENDER] - Normalized status: "${normalizedStatus}"`);
-              console.log(`🔍 [RENDER] - Can cancel: ${canCancel}`);
-              console.log(`🔍 [RENDER] - Show cancel button: ${canCancel}`);
-              console.log(`🔍 [RENDER] - Show disabled button: ${!canCancel && normalizedStatus !== 'delivered' && normalizedStatus !== 'cancelled'}`);
-              
-              return (
-              <div key={orderId} className="order-card">
-                <div className="order-header">
-                  <div className="order-info">
-                    <h3>Order #{orderId}</h3>
-                    <p className="order-date">
-                      Placed on {formatDate(order.orderDate)} at {formatTime(order.orderDate)}
-                    </p>
-                  </div>
-                  <div className="order-status-info">
-                    <span className={`status-badge ${normalizedStatus}`}>
-                      {getStatusIcon(normalizedStatus)} {getStatusText(normalizedStatus)}
-                    </span>
-                    {normalizedStatus !== 'cancelled' && normalizedStatus !== 'delivered' && (
-                      <span className={`cancellation-status ${canCancel ? 'can-cancel' : 'cannot-cancel'}`}>
-                        {canCancel ? '📝 Can be cancelled' : '🚫 Cannot be cancelled'}
-                      </span>
-                    )}
-                  </div>
-                </div>
+            <div className="filter-pill">
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                <option value="all">Global Pipeline (All)</option>
+                <option value="placed">Newly Placed</option>
+                <option value="processing">In Processing</option>
+                <option value="shipped">In Transit (Shipped)</option>
+                <option value="delivered">Completed (Delivered)</option>
+                <option value="cancelled">Voided (Cancelled)</option>
+              </select>
+            </div>
+          </div>
 
-                <div className="order-actions">
-                  {isAdmin && canEditOrCancel(order) && (
-                    <button 
-                      className="btn btn-outline"
-                      onClick={() => openStatusUpdate(order)}
-                    >
-                      Edit
-                    </button>
-                  )}
-                  {canCancelOrder(order) && (
-                    <button 
-                      className="btn btn-danger"
-                      onClick={() => openCancelConfirm(order)}
-                    >
-                      Cancel Order
-                    </button>
-                  )}
-                  {!canCancelOrder(order) && normalizedStatus !== 'delivered' && normalizedStatus !== 'cancelled' && (
-                    <button 
-                      className="btn btn-disabled"
-                      disabled
-                      title="Order cannot be cancelled once shipped"
-                    >
-                      Cannot Cancel
-                    </button>
-                  )}
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => handleViewOrderDetails(order)}
-                  >
-                    View Details
-                  </button>
-                </div>
+          <div className="tracking-stack">
+            {filteredOrders.length === 0 ? (
+              <div className="empty-tracking-state">
+                <div className="ghost-box">📦</div>
+                <h3>No Shipments Found</h3>
+                <p>Try adjusting your filters or search query.</p>
               </div>
-              );
-            })}
+            ) : (
+              filteredOrders.map(order => {
+                const orderId = order.id || order._id || order.orderId;
+                const isExpanded = expandedOrderId === orderId;
+                const normalizedStatus = getNormalizedStatus(order);
+                const canCancel = canCancelOrder(order);
+
+                return (
+                  <div key={orderId} className={`tracking-card ${isExpanded ? 'expanded' : ''}`}>
+                    {/* Always visible header */}
+                    <div className="t-card-header" onClick={() => setExpandedOrderId(isExpanded ? null : orderId)}>
+                      <div className="t-identity">
+                        <div className="t-identifier">#{orderId.slice(-8).toUpperCase()}</div>
+                        <div className="t-datetime">{formatDate(order.orderDate)} • {formatTime(order.orderDate)}</div>
+                      </div>
+                      <div className="t-state">
+                        {renderStepper(normalizedStatus)}
+                      </div>
+                      <div className="t-money-action">
+                        <div className="t-total">₹{parseFloat(order.total || order.totalAmount || 0).toLocaleString()}</div>
+                        <button className="t-expand-btn">
+                          {isExpanded ? '▲' : '▼'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Smooth Expandable Details */}
+                    <div className="t-card-body-wrapper">
+                      <div className="t-card-body">
+                        <div className="t-grid-split">
+                          <div className="t-delivery-info">
+                            <h4>Delivery Context</h4>
+                            <p><strong>To:</strong> {order.customerName}</p>
+                            <p><strong>Phone:</strong> {order.customerPhone}</p>
+                            <p className="address-block"><strong>Dest:</strong> {order.deliveryAddress}</p>
+                            <p><strong>Target:</strong> {formatDate(order.deliveryDate)} ({order.deliveryTime})</p>
+                          </div>
+                          <div className="t-items-manifest">
+                            <h4>Manifest ({order.items?.length || 0} items)</h4>
+                            <div className="manifest-scroller">
+                              {(order.items || []).map((item, idx) => (
+                                <div key={idx} className="manifest-row">
+                                  <div className="m-left">
+                                    <span className="m-name">{item.name || item.productName}</span>
+                                    <span className="m-qty">x{item.quantity}</span>
+                                  </div>
+                                  <div className="m-right">
+                                    ₹{(item.price * item.quantity).toLocaleString()}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card Footer Actions */}
+                        <div className="t-card-footer">
+                          {canCancel && (
+                            <button className="tracker-btn cancel-btn" onClick={() => openCancelConfirm(order)}>
+                              Request Cancellation
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button className="tracker-btn admin-override" onClick={() => openStatusUpdate(order)}>
+                              [Admin] Override Status
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Keeping original cancel confirmation modal context */}
+        {showCancelConfirm && orderToCancel && (
+          <div className="tracker-modal-overlay">
+            <div className="tracker-modal-card bounce-in">
+              <h3>Confirm Void Request</h3>
+              <p>Voiding Order <strong>#{orderToCancel.id || orderToCancel.orderId}</strong>. This action is irreversible.</p>
+              <div className="t-modal-actions">
+                <button className="tracker-btn neutral" onClick={closeCancelConfirm}>Maintain Shipment</button>
+                <button className="tracker-btn danger" onClick={() => handleCancelOrder()}>Void Shipment</button>
+              </div>
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Cancel Order Confirmation Modal */}
-      {showCancelConfirm && orderToCancel && (
-        <div className="modal-overlay">
-          <div className="modal cancel-modal">
-            <div className="modal-header">
-              <h3>Cancel Order</h3>
-              <button 
-                className="close-btn"
-                onClick={closeCancelConfirm}
+        {/* Status Update Modal (Admin) */}
+        {showStatusUpdate && selectedOrder && (
+          <div className="tracker-modal-overlay">
+            <div className="tracker-modal-card bounce-in">
+              <h3>Admin Identity: Override Status</h3>
+              <p>Override pipeline sequence for <strong>#{selectedOrder.id || selectedOrder.orderId}</strong></p>
+              <select
+                value={updateStatus}
+                onChange={(e) => setUpdateStatus(e.target.value)}
+                style={{ width: '100%', padding: '10px', margin: '15px 0', borderRadius: '8px' }}
               >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="cancel-warning">
-                <div className="warning-icon">⚠️</div>
-                <div className="warning-message">
-                  <h4>Are you sure you want to cancel this order?</h4>
-                  <p><strong>Order #{orderToCancel.id || orderToCancel.orderId || orderToCancel._id}</strong></p>
-                  <p>This action cannot be undone and your order will be permanently cancelled.</p>
-                </div>
+                <option value="">Select new status</option>
+                <option value="placed">Placed</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <div className="t-modal-actions" style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
+                <button className="tracker-btn neutral" onClick={() => setShowStatusUpdate(false)}>Abort</button>
+                <button className="tracker-btn" onClick={handleUpdateOrderStatus} style={{ background: '#3b82f6', color: 'white' }}>Execute Transfer</button>
               </div>
-              
-              <div className="order-details-section">
-                <h5>Order Details</h5>
-                <div className="order-summary">
-                  <div className="summary-item">
-                    <span>Customer Name:</span>
-                    <span>{orderToCancel.customerName || 'N/A'}</span>
-                  </div>
-                  <div className="summary-item">
-                    <span>Phone Number:</span>
-                    <span>{orderToCancel.customerPhone || 'N/A'}</span>
-                  </div>
-                  <div className="summary-item">
-                    <span>Email:</span>
-                    <span>{orderToCancel.customerEmail || 'N/A'}</span>
-                  </div>
-                  <div className="summary-item">
-                    <span>Order Date:</span>
-                    <span>{formatDate(orderToCancel.orderDate || orderToCancel.createdAt || orderToCancel.date)}</span>
-                  </div>
-                  <div className="summary-item">
-                    <span>Delivery Date:</span>
-                    <span>{formatDate(orderToCancel.deliveryDate)} at {orderToCancel.deliveryTime || 'N/A'}</span>
-                  </div>
-                  <div className="summary-item">
-                    <span>Delivery Address:</span>
-                    <span>{orderToCancel.deliveryAddress || orderToCancel.address || 'N/A'}</span>
-                  </div>
-                  <div className="summary-item total">
-                    <span>Total Amount:</span>
-                    <span><strong>₹{orderToCancel.total || orderToCancel.totalAmount || orderToCancel.amount || 0}</strong></span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="order-items-section">
-                <h5>Order Items ({orderToCancel.items?.length || 0} items)</h5>
-                <div className="items-list">
-                  {orderToCancel.items && orderToCancel.items.length > 0 ? (
-                    orderToCancel.items.map((item, index) => (
-                      <div key={index} className="order-item">
-                        <div className="item-info">
-                          <span className="item-name">{item.name || item.productName || 'Unknown Product'}</span>
-                          <span className="item-quantity">× {item.quantity || 1}</span>
-                        </div>
-                        <span className="item-price">₹{item.price || item.unitPrice || 0}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="no-items">No items found in this order</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="cancellation-implications">
-                <div className="implication-icon">📝</div>
-                <div className="implication-text">
-                  <h6>What happens when you cancel:</h6>
-                  <ul>
-                    <li>Order status will be changed to "Cancelled"</li>
-                    <li>Any deducted stock will be restored (if applicable)</li>
-                    <li>You will need to place a new order if you change your mind</li>
-                    <li>Admin will be notified about this cancellation</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button 
-                className="btn btn-outline"
-                onClick={closeCancelConfirm}
-              >
-                Keep Order
-              </button>
-              <button 
-                className="btn btn-danger"
-                onClick={() => {
-                  console.log('📦 [DEBUG] Cancel Order button clicked');
-                  console.log('📦 [DEBUG] orderToCancel:', orderToCancel);
-                  console.log('📦 [DEBUG] handleCancelOrder function:', typeof handleCancelOrder);
-                  handleCancelOrder();
-                }}
-              >
-                Cancel Order
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Status Update Modal */}
-      {showStatusUpdate && selectedOrder && (
-        <div className="modal-overlay">
-          <div className="modal status-update-modal">
-            <div className="modal-header">
-              <h3>Update Order Status</h3>
-              <button 
-                className="close-btn"
-                onClick={() => setShowStatusUpdate(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="status-update-form">
-                <div className="form-group">
-                  <label>Order ID:</label>
-                  <div className="order-id-display">#{selectedOrder.id}</div>
-                </div>
-                <div className="form-group">
-                  <label>Current Status:</label>
-                  <div className="current-status">
-                    <span 
-                      className="status-badge"
-                      style={{ backgroundColor: getStatusColor(selectedOrder.status) }}
-                    >
-                      {getStatusIcon(selectedOrder.status)} {getStatusText(selectedOrder.status)}
-                    </span>
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>New Status:</label>
-                  <select
-                    value={updateStatus}
-                    onChange={(e) => setUpdateStatus(e.target.value)}
-                    className="status-select"
-                  >
-                    <option value="">Select new status</option>
-                    <option value="placed">📝 Placed</option>
-                    <option value="processing">⏳ Processing</option>
-                    <option value="shipped">🚚 Shipped</option>
-                    <option value="delivered">✅ Delivered</option>
-                    <option value="cancelled">❌ Cancelled</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Order Details:</label>
-                  <div className="order-summary">
-                    <div className="summary-item">
-                      <span>Customer:</span>
-                      <span>{selectedOrder.customerName}</span>
-                    </div>
-                    <div className="summary-item">
-                      <span>Phone:</span>
-                      <span>{selectedOrder.customerPhone}</span>
-                    </div>
-                    <div className="summary-item">
-                      <span>Total:</span>
-                      <span>₹{selectedOrder.total}</span>
-                    </div>
-                    <div className="summary-item">
-                      <span>Delivery:</span>
-                      <span>{formatDate(selectedOrder.deliveryDate)} at {selectedOrder.deliveryTime}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button 
-                className="btn btn-outline"
-                onClick={() => setShowStatusUpdate(false)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-primary"
-                onClick={handleUpdateOrderStatus}
-              >
-                Update Status
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Order Details Modal */}
-      {showOrderDetails && selectedOrder && (
-        <div className="modal-overlay">
-          <div className="modal order-details-modal">
-            <div className="modal-header">
-              <h3>Order Details - #{selectedOrder.id}</h3>
-              <button 
-                className="close-btn"
-                onClick={closeOrderDetails}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="order-summary">
-                <div className="summary-section">
-                  <h4>Order Information</h4>
-                  <div className="summary-grid">
-                    <div className="summary-item">
-                      <span className="label">Order ID:</span>
-                      <span className="value">{selectedOrder.id}</span>
-                    </div>
-                    <div className="summary-item">
-                      <span className="label">Status:</span>
-                      <span 
-                        className="status-badge"
-                        style={{ backgroundColor: getStatusColor(selectedOrder.status) }}
-                      >
-                        {getStatusIcon(selectedOrder.status)} {getStatusText(selectedOrder.status)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="label">Order Date:</span>
-                      <span className="value">{formatDate(selectedOrder.orderDate)}</span>
-                    </div>
-                    <div className="summary-item">
-                      <span className="label">Order Time:</span>
-                      <span className="value">{formatTime(selectedOrder.orderDate)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="summary-section">
-                  <h4>Customer Information</h4>
-                  <div className="summary-grid">
-                    <div className="summary-item">
-                      <span className="label">Name:</span>
-                      <span className="value">{selectedOrder.customerName}</span>
-                    </div>
-                    <div className="summary-item">
-                      <span className="label">Phone:</span>
-                      <span className="value">{selectedOrder.customerPhone}</span>
-                    </div>
-                    <div className="summary-item">
-                      <span className="label">Email:</span>
-                      <span className="value">{selectedOrder.customerEmail}</span>
-                    </div>
-                    <div className="summary-item">
-                      <span className="label">Address:</span>
-                      <span className="value">{selectedOrder.deliveryAddress}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="summary-section">
-                  <h4>Delivery Information</h4>
-                  <div className="summary-grid">
-                    <div className="summary-item">
-                      <span className="label">Delivery Date:</span>
-                      <span className="value">{formatDate(selectedOrder.deliveryDate)}</span>
-                    </div>
-                    <div className="summary-item">
-                      <span className="label">Delivery Time:</span>
-                      <span className="value">{selectedOrder.deliveryTime}</span>
-                    </div>
-                    {selectedOrder.notes && (
-                      <div className="summary-item full-width">
-                        <span className="label">Notes:</span>
-                        <span className="value">{selectedOrder.notes}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="summary-section">
-                  <h4>Order Items</h4>
-                  <div className="items-list">
-                    {selectedOrder.items?.map((item, index) => (
-                      <div key={index} className="order-item-detail">
-                        <div className="item-info">
-                          <span className="item-name">{item.name}</span>
-                          <span className="item-quantity">x{item.quantity}</span>
-                        </div>
-                        <div className="item-price">
-                          ₹{item.price} × {item.quantity} = ₹{item.price * item.quantity}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="summary-section total-section">
-                  <div className="summary-item total">
-                    <span className="label">Total Amount:</span>
-                    <span className="value">₹{selectedOrder.total}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button 
-                className="btn btn-outline"
-                onClick={closeOrderDetails}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
       </PageContent>
     </PageWrapper>
   );

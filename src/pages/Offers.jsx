@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStoredUser } from '../services/authService.js';
 import {
@@ -10,6 +10,7 @@ import {
 } from '../services/offerService.js';
 import { getProducts } from '../services/productService.js';
 import AdminLayout from '../components/AdminLayout.jsx';
+import { getImageUrl } from '../utils/imageUtils.js';
 import './Offers.css';
 
 const Offers = () => {
@@ -25,6 +26,12 @@ const Offers = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
 
+  // Extract unique categories from products
+  const categories = useMemo(() => {
+    const cats = products.map(p => p.category).filter(Boolean);
+    return [...new Set(cats)].sort();
+  }, [products]);
+
   // Add error boundary state
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -38,6 +45,7 @@ const Offers = () => {
     startDate: '',
     endDate: '',
     applicableProducts: [],
+    applicableCategories: [],
     minOrderAmount: '',
     maxDiscountAmount: '',
     isActive: true,
@@ -47,14 +55,14 @@ const Offers = () => {
 
   useEffect(() => {
     console.log('🔄 Offers component mounted');
-    
+
     const currentUser = getStoredUser();
     if (!currentUser || currentUser.role !== 'admin') {
       console.log('❌ User not authenticated or not admin, redirecting to login');
       navigate('/login');
       return;
     }
-    
+
     console.log('✅ User authenticated as admin, loading data');
     loadData();
   }, [navigate]);
@@ -63,7 +71,7 @@ const Offers = () => {
     try {
       setLoading(true);
       setError('');
-      
+
       // Load offers and products in parallel
       const [offersResponse, productsResponse] = await Promise.all([
         getOffers().catch(err => {
@@ -75,13 +83,13 @@ const Offers = () => {
           return { products: [] }; // Fallback
         })
       ]);
-      
+
       console.log('📊 Offers response:', offersResponse);
       console.log('📦 Products response:', productsResponse);
-      
+
       setOffers(offersResponse.offers || []);
       setProducts(productsResponse.products || []);
-      
+
       console.log('✅ Data loaded successfully');
     } catch (error) {
       console.error('❌ Error loading data:', error);
@@ -130,6 +138,7 @@ const Offers = () => {
       startDate: '',
       endDate: '',
       applicableProducts: [],
+      applicableCategories: [],
       minOrderAmount: '',
       maxDiscountAmount: '',
       isActive: true,
@@ -151,8 +160,8 @@ const Offers = () => {
 
     try {
       // Validate required fields
-      if (!formData.title || !formData.description || !formData.discount || 
-          !formData.startDate || !formData.endDate) {
+      if (!formData.title || !formData.description || !formData.discount ||
+        !formData.startDate || !formData.endDate) {
         setError('Please fill in all required fields');
         return;
       }
@@ -176,7 +185,8 @@ const Offers = () => {
         minOrderAmount: formData.minOrderAmount ? parseFloat(formData.minOrderAmount) : 0,
         maxDiscountAmount: formData.maxDiscountAmount ? parseFloat(formData.maxDiscountAmount) : null,
         usageLimit: formData.usageLimit ? parseInt(formData.usageLimit) : null,
-        applicableProducts: formData.applicableProducts.length > 0 ? formData.applicableProducts : []
+        applicableProducts: formData.applicableProducts.length > 0 ? formData.applicableProducts : [],
+        applicableCategories: formData.applicableCategories.length > 0 ? formData.applicableCategories : []
       };
 
       let response;
@@ -206,6 +216,7 @@ const Offers = () => {
       startDate: new Date(offer.startDate).toISOString().split('T')[0],
       endDate: new Date(offer.endDate).toISOString().split('T')[0],
       applicableProducts: offer.applicableProducts.map(p => p._id),
+      applicableCategories: offer.applicableCategories || [],
       minOrderAmount: offer.minOrderAmount || '',
       maxDiscountAmount: offer.maxDiscountAmount || '',
       isActive: offer.isActive,
@@ -300,11 +311,12 @@ const Offers = () => {
 
   return (
     <AdminLayout active="offers" title="Offers Management">
-      <div className="offers-header">
-        <h2>Offers Management</h2>
-        <button 
+      <div className="offers-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2>Active Offers</h2>
+        <button
           className="btn btn-primary"
           onClick={() => setShowForm(true)}
+          style={{ width: 'auto' }}
         >
           Create New Offer
         </button>
@@ -339,15 +351,15 @@ const Offers = () => {
                 console.warn('Invalid offer object:', offer);
                 return null;
               }
-              
+
               return (
                 <div key={offer._id} className={`offer-card ${isOfferActive(offer) ? 'active' : 'inactive'}`}>
                   <div className="offer-header" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     {offer.image && (
                       <div className="offer-thumbnail" style={{ width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
-                        <img 
-                          src={offer.image} 
-                          alt={offer.title} 
+                        <img
+                          src={getImageUrl(offer.image)}
+                          alt={offer.title}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           onError={(e) => e.target.style.display = 'none'}
                         />
@@ -362,85 +374,92 @@ const Offers = () => {
                       </div>
                     </div>
                   </div>
-                
-                <div className="offer-details">
-                  <p className="offer-description">{offer.description}</p>
-                  
-                  <div className="offer-info-grid">
-                    <div className="info-item">
-                      <label>Discount:</label>
-                      <span>
-                        {offer.discountType === 'percentage' 
-                          ? `${offer.discount}%` 
-                          : `₹${offer.discount}`}
-                      </span>
+
+                  <div className="offer-details">
+                    <p className="offer-description">{offer.description}</p>
+
+                    <div className="offer-info-grid">
+                      <div className="info-item">
+                        <label>Discount:</label>
+                        <span>
+                          {offer.discountType === 'percentage'
+                            ? `${offer.discount}%`
+                            : `₹${offer.discount}`}
+                        </span>
+                      </div>
+
+                      <div className="info-item">
+                        <label>Valid Period:</label>
+                        <span>{formatDate(offer.startDate)} - {formatDate(offer.endDate)}</span>
+                      </div>
+
+                      <div className="info-item">
+                        <label>Applicable Products:</label>
+                        <span>{getProductNames(offer.applicableProducts)}</span>
+                      </div>
+
+                      {offer.applicableCategories && offer.applicableCategories.length > 0 && (
+                        <div className="info-item">
+                          <label>Applicable Categories:</label>
+                          <span>{offer.applicableCategories.join(', ')}</span>
+                        </div>
+                      )}
+
+                      {offer.minOrderAmount > 0 && (
+                        <div className="info-item">
+                          <label>Min Order Amount:</label>
+                          <span>₹{offer.minOrderAmount}</span>
+                        </div>
+                      )}
+
+                      {offer.maxDiscountAmount && (
+                        <div className="info-item">
+                          <label>Max Discount:</label>
+                          <span>₹{offer.maxDiscountAmount}</span>
+                        </div>
+                      )}
+
+                      {offer.usageLimit && (
+                        <div className="info-item">
+                          <label>Usage Limit:</label>
+                          <span>{offer.usedCount} / {offer.usageLimit}</span>
+                        </div>
+                      )}
+
+                      {offer.couponCode && (
+                        <div className="info-item">
+                          <label>Coupon Code:</label>
+                          <span className="coupon-code">{offer.couponCode}</span>
+                        </div>
+                      )}
                     </div>
-                    
-                    <div className="info-item">
-                      <label>Valid Period:</label>
-                      <span>{formatDate(offer.startDate)} - {formatDate(offer.endDate)}</span>
-                    </div>
-                    
-                    <div className="info-item">
-                      <label>Applicable Products:</label>
-                      <span>{getProductNames(offer.applicableProducts)}</span>
-                    </div>
-                    
-                    {offer.minOrderAmount > 0 && (
-                      <div className="info-item">
-                        <label>Min Order Amount:</label>
-                        <span>₹{offer.minOrderAmount}</span>
-                      </div>
+                  </div>
+
+                  <div className="offer-actions">
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => handleEdit(offer)}
+                    >
+                      Edit
+                    </button>
+
+                    {!offer.couponCode && (
+                      <button
+                        className="btn btn-outline"
+                        onClick={() => handleGenerateCoupon(offer._id)}
+                      >
+                        Generate Coupon
+                      </button>
                     )}
-                    
-                    {offer.maxDiscountAmount && (
-                      <div className="info-item">
-                        <label>Max Discount:</label>
-                        <span>₹{offer.maxDiscountAmount}</span>
-                      </div>
-                    )}
-                    
-                    {offer.usageLimit && (
-                      <div className="info-item">
-                        <label>Usage Limit:</label>
-                        <span>{offer.usedCount} / {offer.usageLimit}</span>
-                      </div>
-                    )}
-                    
-                    {offer.couponCode && (
-                      <div className="info-item">
-                        <label>Coupon Code:</label>
-                        <span className="coupon-code">{offer.couponCode}</span>
-                      </div>
-                    )}
+
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handleDelete(offer._id)}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
-                
-                <div className="offer-actions">
-                  <button 
-                    className="btn btn-outline"
-                    onClick={() => handleEdit(offer)}
-                  >
-                    Edit
-                  </button>
-                  
-                  {!offer.couponCode && (
-                    <button 
-                      className="btn btn-outline"
-                      onClick={() => handleGenerateCoupon(offer._id)}
-                    >
-                      Generate Coupon
-                    </button>
-                  )}
-                  
-                  <button 
-                    className="btn btn-danger"
-                    onClick={() => handleDelete(offer._id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
               );
             })
           )}
@@ -455,7 +474,7 @@ const Offers = () => {
               <h2>{editingOffer ? 'Edit Offer' : 'Create New Offer'}</h2>
               <button onClick={resetForm} className="close-btn">&times;</button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="offer-form">
               <div className="form-grid">
                 <div className="form-group">
@@ -469,7 +488,7 @@ const Offers = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="description">Description *</label>
                   <textarea
@@ -481,7 +500,7 @@ const Offers = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group full-width">
                   <label>Offer Image</label>
                   <div className="image-upload-container">
@@ -505,7 +524,7 @@ const Offers = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="discountType">Discount Type</label>
                   <select
@@ -518,7 +537,7 @@ const Offers = () => {
                     <option value="fixed">Fixed Amount</option>
                   </select>
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="discount">
                     Discount ({formData.discountType === 'percentage' ? '%' : '₹'}) *
@@ -535,7 +554,7 @@ const Offers = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="startDate">Start Date *</label>
                   <input
@@ -547,7 +566,7 @@ const Offers = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="endDate">End Date *</label>
                   <input
@@ -560,7 +579,7 @@ const Offers = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group full-width">
                   <label htmlFor="applicableProducts">APPLICABLE PRODUCTS</label>
                   <div className="multi-select-dropdown">
@@ -586,7 +605,36 @@ const Offers = () => {
                     </div>
                   </div>
                 </div>
-                
+
+                <div className="form-group full-width">
+                  <label htmlFor="applicableCategories">APPLICABLE CATEGORIES</label>
+                  <div className="multi-select-dropdown">
+                    <select
+                      id="applicableCategories"
+                      name="applicableCategories"
+                      value={formData.applicableCategories}
+                      onChange={(e) => {
+                        const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+                        setFormData(prev => ({ ...prev, applicableCategories: selectedOptions }));
+                      }}
+                      multiple
+                      className="product-multi-select"
+                    >
+                      <option value="" disabled>
+                        Leave empty for all categories
+                      </option>
+                      {categories.map(category => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="multi-select-hint">
+                      Hold Ctrl/Cmd to select multiple categories
+                    </div>
+                  </div>
+                </div>
+
                 <div className="form-group">
                   <label htmlFor="minOrderAmount">Minimum Order Amount</label>
                   <input
@@ -600,7 +648,7 @@ const Offers = () => {
                     placeholder="0"
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="maxDiscountAmount">Maximum Discount Amount</label>
                   <input
@@ -614,7 +662,7 @@ const Offers = () => {
                     placeholder="No limit"
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="usageLimit">Usage Limit</label>
                   <input
@@ -627,7 +675,7 @@ const Offers = () => {
                     placeholder="Unlimited"
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="couponCode">Coupon Code</label>
                   <input
@@ -640,7 +688,7 @@ const Offers = () => {
                     style={{ textTransform: 'uppercase' }}
                   />
                 </div>
-                
+
                 <div className="form-group checkbox-group">
                   <label>
                     <input
@@ -653,7 +701,7 @@ const Offers = () => {
                   </label>
                 </div>
               </div>
-              
+
               <div className="form-actions">
                 <button type="button" onClick={resetForm} className="btn btn-outline">
                   Cancel

@@ -1,16 +1,28 @@
-import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from 'react-router-dom';
 import { logout, getStoredUser } from '../services/authService.js';
+import { getImageUrl } from '../utils/imageUtils.js';
 
 export default function UserNavbar() {
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // 🔹 Get dynamic user data (from login / backend)
   const currentUser = getStoredUser();
   const userName = currentUser?.name || currentUser?.username || 'User';
-  const navigate = useNavigate();
 
-  // 🔹 Active tab state
-  const [active, setActive] = useState("Home");
+  // 🔹 Detect active tab based on current path
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path.startsWith('/user-home') || path.startsWith('/user-products')) return 'Home';
+    if (path.startsWith('/user-dashboard')) return 'Dashboard';
+    if (path.startsWith('/track-orders')) return 'Track Orders';
+    if (path.startsWith('/cart')) return 'Cart';
+    if (path.startsWith('/edit-profile')) return 'Edit Profile';
+    return 'Home';
+  };
+
+  const active = getActiveTab();
 
   const handleLogout = () => {
     logout();
@@ -18,10 +30,8 @@ export default function UserNavbar() {
   };
 
   const handleNavigation = (item) => {
-    setActive(item);
-    
     // Navigate based on the menu item
-    switch(item) {
+    switch (item) {
       case 'Home':
         navigate('/user-home');
         break;
@@ -161,6 +171,20 @@ export default function UserNavbar() {
             font-size: 12px;
           }
         }
+
+        .user-nav-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid #b7e48b;
+        }
+
+        .user-info-box {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
       `}</style>
 
       <div className="navbar">
@@ -169,9 +193,14 @@ export default function UserNavbar() {
         <div className="left">
           <div className="logo">AA</div>
 
-          <div>
-            <div className="title">Aadhavan Agencies</div>
-            <div className="subtitle">Welcome, {userName}</div>
+          <div className="user-info-box">
+            {currentUser?.profilePic && (
+              <img src={getImageUrl(currentUser.profilePic)} alt="Profile" className="user-nav-avatar" />
+            )}
+            <div>
+              <div className="title">Aadhavan Agencies</div>
+              <div className="subtitle">Welcome, {userName}</div>
+            </div>
           </div>
         </div>
 

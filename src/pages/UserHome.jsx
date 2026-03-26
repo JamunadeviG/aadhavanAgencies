@@ -7,6 +7,7 @@ import { getProducts } from '../services/productService.js';
 import { PageWrapper, PageContent, Card, CardBody, Grid, Flex, LoadingState } from '../components/Layout.jsx';
 import UserNavbar from '../components/UserNavbar.jsx';
 import { CommonFooter } from '../components/CommonFooter.jsx';
+import { getImageUrl } from '../utils/imageUtils.js';
 import './UserHome.css';
 
 // LocalStorage Cart Functions
@@ -32,21 +33,21 @@ const saveCartToStorage = (cart) => {
 const addToCartLocal = (product) => {
   console.log('🛒 ADD TO CART LOCAL START');
   console.log('🛒 Product being added:', product);
-  
+
   const cart = getCartFromStorage();
   console.log('🛒 Current cart before adding:', cart);
-  
+
   // Create a unique identifier for the product
   const productId = product._id || product.id || product.name + '-' + product.price;
   console.log('🛒 Product ID for cart:', productId);
-  
+
   const existingItem = cart.find(item => {
     const itemId = item._id || item.id || item.name + '-' + item.price;
     return itemId === productId;
   });
-  
+
   console.log('🛒 Existing item found:', existingItem);
-  
+
   if (existingItem) {
     existingItem.quantity += 1;
     console.log('🛒 Updated existing item quantity to:', existingItem.quantity);
@@ -65,13 +66,13 @@ const addToCartLocal = (product) => {
     cart.push(newItem);
     console.log('🛒 Added new item to cart:', newItem);
   }
-  
+
   console.log('🛒 Cart after adding:', cart);
   console.log('🛒 Total items in cart:', cart.length);
-  
+
   saveCartToStorage(cart);
   console.log('🛒 Cart saved to localStorage');
-  
+
   return { success: true, cart: { itemCount: cart.length, items: cart } };
 };
 
@@ -105,7 +106,7 @@ const UserHome = () => {
         console.error('Failed to load offers:', error);
       }
     };
-    
+
     // Load products for quick order
     const loadProducts = async () => {
       try {
@@ -120,10 +121,10 @@ const UserHome = () => {
         setLoading(false);
       }
     };
-    
+
     loadOffers();
     loadProducts();
-    
+
     // Load cart count from database
     const updateCartCount = async () => {
       try {
@@ -135,16 +136,16 @@ const UserHome = () => {
         setCartCount(0);
       }
     };
-    
+
     updateCartCount();
-    
+
     // Listen for cart changes
     const handleCartChange = () => {
       updateCartCount();
     };
-    
+
     window.addEventListener('cartUpdated', handleCartChange);
-    
+
     return () => {
       window.removeEventListener('cartUpdated', handleCartChange);
     };
@@ -210,7 +211,7 @@ const UserHome = () => {
       console.log('Product id:', product.id);
       console.log('User object:', user);
       console.log('User ID:', user?.id);
-      
+
       if (!user?.id) {
         console.log('❌ User not logged in');
         setNotificationMessage('Please login to add products to cart');
@@ -235,12 +236,12 @@ const UserHome = () => {
       console.log('📤 Prepared product data:', productData);
 
       const response = await addToCart(productData);
-      
+
       console.log('📥 Cart add response:', response);
-      
+
       if (response.success) {
         console.log('✅ Cart add successful');
-        
+
         // Update cart count from database
         try {
           const cartItems = await getCart();
@@ -251,7 +252,7 @@ const UserHome = () => {
           console.error('Error updating cart count:', countError);
           setNotificationMessage(`${product.name} added to cart!`);
         }
-        
+
         setShowCartNotification(true);
         setTimeout(() => setShowCartNotification(false), 3000);
         window.dispatchEvent(new Event('cartUpdated'));
@@ -275,7 +276,7 @@ const UserHome = () => {
   // Test function to add multiple products
   const testMultipleProducts = () => {
     console.log('🧪 TESTING MULTIPLE PRODUCTS');
-    
+
     const testProducts = [
       {
         _id: 'test1',
@@ -285,7 +286,7 @@ const UserHome = () => {
         stock: 50
       },
       {
-        _id: 'test2', 
+        _id: 'test2',
         name: 'Test Product 2',
         price: 20,
         unit: 'L',
@@ -299,14 +300,14 @@ const UserHome = () => {
         stock: 100
       }
     ];
-    
+
     testProducts.forEach((product, index) => {
       setTimeout(() => {
         console.log(`🧪 Adding test product ${index + 1}:`, product);
         addToCartLocal(product);
       }, index * 500);
     });
-    
+
     setTimeout(() => {
       const cart = getCartFromStorage();
       console.log('🧪 Final cart after adding test products:', cart);
@@ -333,8 +334,8 @@ const UserHome = () => {
                         <Card hover className="offer-card">
                           <div className="offer-image">
                             {offer.image ? (
-                              <img 
-                                src={offer.image}
+                              <img
+                                src={getImageUrl(offer.image)}
                                 alt={offer.title}
                                 onError={(e) => {
                                   e.target.style.display = 'none';
@@ -344,8 +345,8 @@ const UserHome = () => {
                                 }}
                               />
                             ) : null}
-                            <div 
-                              className="product-no-image" 
+                            <div
+                              className="product-no-image"
                               style={{
                                 display: offer.image ? 'none' : 'flex',
                                 height: '100%',
@@ -369,31 +370,89 @@ const UserHome = () => {
                                 </span>
                                 <h3 className="offer-title">{offer.title}</h3>
                                 <p className="offer-desc">{offer.description}</p>
+
+                                <div className="offer-features">
+                                  <div className="feature-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    <span>Instant Discount at Checkout</span>
+                                  </div>
+                                  <div className="feature-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    <span>Valid for Verified Wholesale Partners</span>
+                                  </div>
+                                  <div className="feature-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    <span>Bulk Discount automatically applied to items</span>
+                                  </div>
+                                  <div className="feature-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    <span>Priority Shipping & Logistics Handling</span>
+                                  </div>
+                                  {offer.applicableCategories && offer.applicableCategories.length > 0 && (
+                                    <div className="feature-item">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                      <span>Applicable on: {offer.applicableCategories.join(', ')}</span>
+                                    </div>
+                                  )}
+                                  {offer.maxDiscount && offer.maxDiscount > 0 && (
+                                    <div className="feature-item">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                      <span>Save up to ₹{offer.maxDiscount}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="offer-highlights-mid">
+                                <div className="highlight-item">
+                                  <div className="hi-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                  </div>
+                                  <div className="hi-text">
+                                    <strong>Quality Assured</strong>
+                                    <span>Premium Wholesale Grade</span>
+                                  </div>
+                                </div>
+                                <div className="highlight-item">
+                                  <div className="hi-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                                  </div>
+                                  <div className="hi-text">
+                                    <strong>Priority Logistics</strong>
+                                    <span>Faster B2B Fulfillment</span>
+                                  </div>
+                                </div>
                               </div>
 
                               <div className="offer-info-meta">
                                 <div className="meta-grid">
                                   <div className="meta-item">
-                                    <i className="meta-icon">⏱️</i>
+                                    <i className="meta-icon">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    </i>
                                     <div className="meta-text">
                                       <span className="meta-label">Valid Until</span>
                                       <span className="meta-value">{new Date(offer.endDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                     </div>
                                   </div>
-                                  
+
                                   {offer.minOrderAmount > 0 && (
                                     <div className="meta-item">
-                                      <i className="meta-icon">🛍️</i>
+                                      <i className="meta-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                                      </i>
                                       <div className="meta-text">
                                         <span className="meta-label">Min. Order</span>
                                         <span className="meta-value">₹{offer.minOrderAmount}</span>
                                       </div>
                                     </div>
                                   )}
-                                  
+
                                   {offer.couponCode && (
                                     <div className="meta-item coupon-item">
-                                      <i className="meta-icon">🎟️</i>
+                                      <i className="meta-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="10" width="18" height="12" rx="2" ry="2"></rect><path d="M7 10V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"></path></svg>
+                                      </i>
                                       <div className="meta-text">
                                         <span className="meta-label">Use Code</span>
                                         <span className="meta-value coupon-highlight">{offer.couponCode}</span>
@@ -402,7 +461,7 @@ const UserHome = () => {
                                   )}
                                 </div>
 
-                                <button 
+                                <button
                                   className="btn btn-primary offer-shop-btn"
                                   onClick={() => navigate('/user-products')}
                                 >
@@ -415,7 +474,7 @@ const UserHome = () => {
                       </div>
                     ))}
                   </div>
-                  
+
                   {/* Carousel Navigation */}
                   <button className="carousel-btn carousel-btn-prev" onClick={prevSlide}>
                     ‹
@@ -423,7 +482,7 @@ const UserHome = () => {
                   <button className="carousel-btn carousel-btn-next" onClick={nextSlide}>
                     ›
                   </button>
-                  
+
                   {/* Carousel Indicators */}
                   <div className="carousel-indicators">
                     {offers.map((_, index) => (
@@ -448,7 +507,7 @@ const UserHome = () => {
               View All Products
             </button>
           </div>
-          
+
           {loading ? (
             <LoadingState message="Loading products..." />
           ) : (
@@ -459,17 +518,17 @@ const UserHome = () => {
                   ...product,
                   id: product.id || product._id || `product-${index}-${product.name}-${product.price}`
                 };
-                
+
                 return (
                   <Card key={productWithId.id} hover className="product-card">
-                    <div 
-                      className="product-image clickable" 
+                    <div
+                      className="product-image clickable"
                       style={{ height: '180px', flexShrink: 0, padding: '10px', backgroundColor: '#fff', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
                       onClick={() => handleProductImageClick(productWithId)}
                     >
                       {productWithId.image && productWithId.image.trim() !== '' ? (
-                        <img 
-                          src={productWithId.image}
+                        <img
+                          src={getImageUrl(productWithId.image)}
                           alt={productWithId.name}
                           style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                           onError={(e) => {
@@ -481,8 +540,8 @@ const UserHome = () => {
                           }}
                         />
                       ) : null}
-                      <div 
-                        className="product-no-image" 
+                      <div
+                        className="product-no-image"
                         style={{
                           display: productWithId.image && productWithId.image.trim() !== '' ? 'none' : 'flex',
                           height: '100%',
@@ -512,13 +571,13 @@ const UserHome = () => {
                         )}
                       </div>
                       <div className="product-actions">
-                        <button 
+                        <button
                           className="btn btn-primary btn-sm"
                           onClick={() => handleAddToCart(productWithId)}
                         >
                           Add to Cart
                         </button>
-                        <button 
+                        <button
                           className="btn btn-outline btn-sm"
                           onClick={() => navigate('/cart')}
                         >
@@ -574,7 +633,7 @@ const UserHome = () => {
               <h3>{selectedProduct.name}</h3>
               <button className="modal-close" onClick={closeProductModal}>×</button>
             </div>
-            
+
             <div className="modal-content">
               <div className="modal-image-section">
                 <div className="zoom-controls">
@@ -583,13 +642,13 @@ const UserHome = () => {
                   <button onClick={handleZoomIn} className="zoom-btn">+</button>
                   <button onClick={handleZoomReset} className="zoom-reset">Reset</button>
                 </div>
-                
+
                 <div className="image-container">
                   {selectedProduct.image && selectedProduct.image.trim() !== '' ? (
-                    <img 
-                      src={selectedProduct.image}
+                    <img
+                      src={getImageUrl(selectedProduct.image)}
                       alt={selectedProduct.name}
-                      style={{ 
+                      style={{
                         transform: `scale(${imageZoom})`,
                         maxWidth: '100%',
                         maxHeight: '400px',
@@ -604,7 +663,7 @@ const UserHome = () => {
                   )}
                 </div>
               </div>
-              
+
               <div className="modal-details">
                 <div className="product-info">
                   <h4>Product Details</h4>
@@ -631,9 +690,9 @@ const UserHome = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="modal-actions">
-                  <button 
+                  <button
                     className="btn btn-primary"
                     onClick={() => {
                       handleAddToCart(selectedProduct);

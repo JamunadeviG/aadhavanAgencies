@@ -110,22 +110,26 @@ const userSchema = new mongoose.Schema({
     required: function () {
       return this.role === 'user';
     }
+  },
+  profilePic: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields
 });
 
 // Hash password before saving to database
-userSchema.pre('save', async function() {
+userSchema.pre('save', async function () {
   // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) return;
-  
+
   // Hash password with cost of 10
   this.password = await bcrypt.hash(this.password, 10);
 });
 
 // Method to compare password for login
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
