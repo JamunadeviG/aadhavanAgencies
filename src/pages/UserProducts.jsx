@@ -141,11 +141,17 @@ const UserProducts = () => {
     );
   };
 
-  const getCategories = useCallback((productsToProcess) => {
-    return ['all', ...new Set(productsToProcess.map(p => p.category || '').filter(Boolean))];
-  }, []);
-
-  const categories = useMemo(() => getCategories(products), [products, getCategories]);
+  const categories = useMemo(() => [
+    'all',
+    'Grain & cereals',
+    'Pulses & Dals',
+    'Spices & Masalas',
+    'Edible Oils & Ghee',
+    'Snacks & Packaged Foods',
+    'Vegetables',
+    'Cleaning',
+    'Personal Care'
+  ], []);
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {

@@ -27,10 +27,16 @@ const Offers = () => {
   const [imagePreview, setImagePreview] = useState('');
 
   // Extract unique categories from products
-  const categories = useMemo(() => {
-    const cats = products.map(p => p.category).filter(Boolean);
-    return [...new Set(cats)].sort();
-  }, [products]);
+  const categories = useMemo(() => [
+    'Grain & cereals',
+    'Pulses & Dals',
+    'Spices & Masalas',
+    'Edible Oils & Ghee',
+    'Snacks & Packaged Foods',
+    'Vegetables',
+    'Cleaning',
+    'Personal Care'
+  ], []);
 
   // Add error boundary state
   const [hasError, setHasError] = useState(false);

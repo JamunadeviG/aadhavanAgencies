@@ -105,6 +105,9 @@ const InlineEditForm = ({ product, onSave, onCancel }) => {
               <option value="Spices & Masalas">Spices & Masalas</option>
               <option value="Edible Oils & Ghee">Edible Oils & Ghee</option>
               <option value="Snacks & Packaged Foods">Snacks & Packaged Foods</option>
+              <option value="Vegetables">Vegetables</option>
+              <option value="Cleaning">Cleaning</option>
+              <option value="Personal Care">Personal Care</option>
             </select>
           </div>
           <div className="inp-group">
